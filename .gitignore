@@ -1,4 +1,5 @@
 .idea/
 notebooks/
 env/
+**/__pycache__
 
