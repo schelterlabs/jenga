@@ -1,7 +1,7 @@
 import random
 
 
-class MissingValueCorruption:
+class MissingValues:
 
     def __init__(self, column, fraction, na_value):
         self.column = column
@@ -21,7 +21,7 @@ class MissingValueCorruption:
         return corrupted_data
 
 
-class CharacterCorruption:
+class BrokenCharacters:
 
     def __init__(self, column, fraction):
         self.column = column

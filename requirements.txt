@@ -1,3 +1,10 @@
 sklearn
 pandas
 numpy
+opencv-python
+keras
+tensorflow
+pillow
+matplotlib
+cv2
+

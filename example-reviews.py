@@ -1,5 +1,5 @@
 from jenga.tasks.reviews import VideogameReviewsTask
-from jenga.corruptions import MissingValueCorruption, CharacterCorruption
+from jenga.corruptions.text import MissingValues, BrokenCharacters
 
 task = VideogameReviewsTask()
 
@@ -19,13 +19,13 @@ while task.advance_current_week():
 
     print("\tAUC on test data", task.score_on_current_test_data(predictions))
 
-    corruption = MissingValueCorruption(column='title_and_review_text', fraction=0.8, na_value='')
+    corruption = MissingValues(column='title_and_review_text', fraction=0.8, na_value='')
 
     corrupted_test_data = corruption.transform(test_data)
     predictions = model.predict_proba(corrupted_test_data)
     print("\tAUC on corrupted test data (missing values)", task.score_on_current_test_data(predictions))
 
-    corruption = CharacterCorruption(column='title_and_review_text', fraction=0.8)
+    corruption = BrokenCharacters(column='title_and_review_text', fraction=0.8)
 
     corrupted_test_data = corruption.transform(test_data)
     predictions = model.predict_proba(corrupted_test_data)
