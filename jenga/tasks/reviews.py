@@ -18,6 +18,10 @@ class VideogameReviewsTask:
                    'total_votes', 'vine', 'verified_purchase', 'review_headline', 'review_body',
                    'review_date']
 
+        self.numerical_attributes = ['helpful_votes', 'total_votes']
+        self.categorical_attributes = ['vine', 'verified_purchase']
+        self.text_attributes = 'title_and_review_text'
+
         raw_data = pd.read_csv('data/reviews/2015-05-videogames.tsv', sep='\t', names=columns)
 
         raw_data[['product_title', 'review_headline', 'review_body']] = raw_data[
@@ -101,13 +105,10 @@ class VideogameReviewsTask:
 
     def fit_baseline_model(self, train_data, train_labels):
 
-        numerical_attributes = ['helpful_votes', 'total_votes']
-        categorical_attributes = ['vine', 'verified_purchase']
-
         feature_transformation = ColumnTransformer(transformers=[
-            ('numerical_features', StandardScaler(), numerical_attributes),
-            ('categorical_features', OneHotEncoder(handle_unknown='ignore'), categorical_attributes),
-            ('textual_features', HashingVectorizer(ngram_range=(1, 3), n_features=10000), 'title_and_review_text')
+            ('numerical_features', StandardScaler(), self.numerical_attributes),
+            ('categorical_features', OneHotEncoder(handle_unknown='ignore'), self.categorical_attributes),
+            ('textual_features', HashingVectorizer(ngram_range=(1, 3), n_features=10000), self.text_attributes)
         ], sparse_threshold=1.0)
 
         param_grid = {
