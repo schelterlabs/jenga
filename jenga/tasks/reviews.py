@@ -19,11 +19,12 @@ class VideogameReviewsTask:
                    'review_date']
 
         raw_data = pd.read_csv('data/reviews/2015-05-videogames.tsv', sep='\t', names=columns)
+        raw_data.drop(['total_votes'], axis=1)
 
         raw_data[['product_title', 'review_headline', 'review_body']] = raw_data[
             ['product_title', 'review_headline', 'review_body']].fillna(value='')
         raw_data[
-            'title_and_review_text'] = raw_data.product_title + ' ' + raw_data.review_headline + raw_data.review_body
+            'title_and_review_text'] = raw_data.product_title + ' ' + raw_data.review_headline + ' ' + raw_data.review_body
 
         self.__weeks = [
             self.__extract_data(raw_data, '2015-05-04', '2015-05-10'),
@@ -43,12 +44,12 @@ class VideogameReviewsTask:
 
     def __extract_data(self, raw_data, start_date, end_date):
         data_slice = raw_data[(raw_data.review_date >= start_date) & (raw_data.review_date <= end_date)].copy(deep=True)
-        data_slice = data_slice.drop(['star_rating'], axis=1)
+        data_slice = data_slice.drop(['helpful_votes'], axis=1)
         return data_slice
 
     def __extract_labels(self, raw_data, start_date, end_date):
         data_slice = raw_data[(raw_data.review_date >= start_date) & (raw_data.review_date <= end_date)].copy(deep=True)
-        labels = np.ravel(label_binarize(data_slice.star_rating == 5, [True, False]))
+        labels = np.ravel(label_binarize(data_slice.helpful_votes > 0, [True, False]))
 
         return labels
 
@@ -101,7 +102,7 @@ class VideogameReviewsTask:
 
     def fit_baseline_model(self, train_data, train_labels):
 
-        numerical_attributes = ['helpful_votes', 'total_votes']
+        numerical_attributes = ['star_rating']
         categorical_attributes = ['vine', 'verified_purchase']
 
         feature_transformation = ColumnTransformer(transformers=[
