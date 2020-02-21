@@ -4,7 +4,7 @@ from jenga.corruptions.text import MissingValues, BrokenCharacters
 task = VideogameReviewsTask()
 
 # This task has data for four weeks,
-# We train on past reviews and try to predict the five star reviews for the next week
+# We train on past reviews and try to predict the helpful reviews of the next week
 while task.advance_current_week():
 
     print("----- Week", task.current_week(), "-----")
