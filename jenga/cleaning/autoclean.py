@@ -27,13 +27,13 @@ class AutoClean:
             perturbation_fractions=[.1,.5,.9]).fit_ppp(train_data, train_labels)
 
 
-    def __call__(df):
-        predicted_score = ppp_model.predict_ppp(df)
+    def __call__(self, df):
+        predicted_score = self.ppp_model.predict_ppp(df)
         print(f"PPP score no cleaning {predicted_score}")
         cleaner_results = []
         for c in self.cleaners:
             df_cleaned = c(self.categorical_columns, self.numerical_columns)(df.copy(deep=True))
-            cleaned_score = ppp_model.predict_ppp(df_cleaned)
+            cleaned_score = self.ppp_model.predict_ppp(df_cleaned)
             print(f"PPP score with cleaning {c.__class__}: {cleaned_score}")
             cleaner_results.append(cleaned_score)
 

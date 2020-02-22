@@ -16,6 +16,7 @@ class SimpleImputation(Imputation):
         
         for c in self.numerical_columns:
             df.loc[df[c].isnull(),[c]] = df[c].dropna().median()
+        return df
 
 class DatawigImputation(Imputation):
     def __call__(self, df):
@@ -27,3 +28,4 @@ class DatawigImputation(Imputation):
             print(f"Imputing {missing.sum()} missing values in column {c}")
             df_tmp = imputer.predict(df)
             df[c] = df_tmp[c + "_imputed"]
+        return df
