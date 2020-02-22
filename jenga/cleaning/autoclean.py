@@ -1,20 +1,31 @@
 import pandas as pd
 from .imputation import SimpleImputation, DatawigImputation
+from .ppp import PipelineWithPPP
 
 class AutoClean:
     def __init__(self,  
-                    ppp_model,
+                    train_data,
+                    train_labels,
+                    pipeline,
                     numerical_columns=[],
                     categorical_columns=[], 
-                    text_columns=[]):
-        self.ppp_model = ppp_model
+                    text_columns=[],
+                    cleaners=[
+                        SimpleImputation,
+                        DatawigImputation
+                    ]):
+        
         self.categorical_columns = categorical_columns
         self.numerical_columns = numerical_columns
         self.text_columns = text_columns
-        self.cleaners = [
-            SimpleImputation,
-            DatawigImputation
-        ]
+        self.cleaners = cleaners
+        self.ppp_model = PipelineWithPPP(pipeline, 
+            numerical_columns = self.numerical_columns,
+            categorical_columns = self.categorical_columns,
+            text_columns = self.text_columns,
+            num_repetitions=3,
+            perturbation_fractions=[.1,.5,.9]).fit_ppp(train_data, train_labels)
+
 
     def __call__(df):
         predicted_score = ppp_model.predict_ppp(df)

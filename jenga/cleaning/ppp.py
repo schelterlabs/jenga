@@ -25,7 +25,7 @@ class PipelineWithPPP:
                 numerical_columns = [],
                 categorical_columns = [],
                 text_columns = [],
-                num_repetitions=10, 
+                num_repetitions=5, 
                 perturbation_fractions=[.1, .2, .5, .9]):
         self.pipeline = pipeline
         self.num_repetitions = num_repetitions
@@ -72,7 +72,7 @@ class PipelineWithPPP:
                     ]
                     
                 if self.text_columns:
-                    text_col = random.choice(self.text_columns)
+                    text_col = random.choice([self.text_columns])
                     self.perturbations.append(('broken_characters', BrokenCharacters(text_col, fraction)))
 
     @staticmethod
@@ -88,10 +88,12 @@ class PipelineWithPPP:
 
     def fit_ppp(self, X_df, y):
 
-        print("Generating perturbed training data...")
+        print(f"Generating perturbed training data on {len(X_df)} rows ...")
         meta_features = []
         meta_scores = []
-        for perturbation in self.perturbations:
+        for idx,perturbation in enumerate(self.perturbations):
+            col = [v for k,v in perturbation[1].__dict__.items() if 'colum' in k][0]
+            print(f'\t... perturbation {idx}/{len(self.perturbations)}: {perturbation[0]}, col {col}, fraction: {perturbation[1].fraction}')
             df_perturbed = perturbation[1](X_df)
             predictions = self.pipeline.predict_proba(df_perturbed)
             meta_features.append(self.compute_ppp_features(predictions))

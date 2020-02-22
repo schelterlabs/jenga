@@ -7,7 +7,7 @@ class BrokenCharacters:
         self.column = column
         self.fraction = fraction
 
-    def transform(self, data):
+    def __call__(self, data):
         corrupted_data = data.copy(deep=True)
 
         replacements = {
