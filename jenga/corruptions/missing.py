@@ -41,7 +41,7 @@ class MissingValuesLowEntropy:
                     model, 
                     categorical_columns, 
                     numerical_columns,
-                    categorical_value_to_put_in='NULL',
+                    categorical_value_to_put_in='',
                     numerical_value_to_put_in=0):
         self.fraction = fraction
         self.model = model

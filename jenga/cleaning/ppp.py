@@ -10,11 +10,13 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.pipeline import Pipeline
-from corruptions.numerical import SwappedValues, Outliers, Scaling
-from corruptions.missing import ( MissingValuesHighEntropy, 
-                                  MissingValuesLowEntropy, 
-                                  MissingValues
-                                )
+from .. import corruptions
+# from corruptions.numerical import SwappedValues, Outliers, Scaling
+# from corruptions.text import BrokenCharacters
+# from corruptions.missing import ( MissingValuesHighEntropy, 
+#                                   MissingValuesLowEntropy, 
+#                                   MissingValues
+#                                 )
 
 class PipelineWithPPP:
 
@@ -22,48 +24,54 @@ class PipelineWithPPP:
                 pipeline, 
                 numerical_columns = [],
                 categorical_columns = [],
+                text_columns = [],
                 num_repetitions=10, 
                 perturbation_fractions=[.1, .2, .5, .9]):
         self.pipeline = pipeline
         self.num_repetitions = num_repetitions
         self.perturbation_fractions = perturbation_fractions
         # assuming the first step is a ColumnTransformer with transformers named 
-        # 'categorical_features' or 'numerical_features'
-        self.categorical_features = categorical_columns
-        self.numerical_features = numerical_columns
+        # 'categorical_columns' or 'numerical_columns'
+        self.categorical_columns = categorical_columns
+        self.numerical_columns = numerical_columns
+        self.text_columns = text_columns
         
         self.perturbations = []
         for _ in range(self.num_repetitions):
             for fraction in self.perturbation_fractions:
-                column_pairs = list(itertools.combinations(self.numerical_features, 2))
+                column_pairs = list(itertools.combinations(self.numerical_columns, 2))
                 swap_affected_column_pair = random.choice(column_pairs)
-                self.perturbations.append(('swapped', SwappedValues(fraction, swap_affected_column_pair)))
+                self.perturbations.append(('swapped', corruptions.numerical.SwappedValues(fraction, swap_affected_column_pair)))
                 
-                column_pairs = list(itertools.combinations(self.categorical_features, 2))
+                column_pairs = list(itertools.combinations(self.categorical_columns, 2))
                 swap_affected_column_pair = random.choice(column_pairs)
-                self.perturbations.append(('swapped', SwappedValues(fraction, swap_affected_column_pair)))
+                self.perturbations.append(('swapped', corruptions.numerical.SwappedValues(fraction, swap_affected_column_pair)))
 
-                num_col = random.choice(self.numerical_features)
+                num_col = random.choice(self.numerical_columns)
             
                 self.perturbations += [
-                ('scaling', Scaling(fraction, [num_col])),
-                ('outlier', Outliers(fraction, [num_col])),
-                ('missing_MCAR', MissingValues(fraction, num_col, np.nan, 'MCAR')),
-                ('missing_MAR', MissingValues(fraction, num_col, np.nan, 'MAR')),
-                ('missing_MNAR', MissingValues(fraction, num_col, np.nan, 'MNAR'))
+                ('scaling', corruptions.numerical.Scaling(fraction, [num_col])),
+                ('outlier', corruptions.numerical.Outliers(fraction, [num_col])),
+                ('missing_MCAR', corruptions.missing.MissingValues(fraction, num_col, 0, 'MCAR')),
+                ('missing_MAR', corruptions.missing.MissingValues(fraction, num_col, 0, 'MAR')),
+                ('missing_MNAR', corruptions.missing.MissingValues(fraction, num_col, 0, 'MNAR'))
                 ]
             
-                cat_col = random.choice(self.categorical_features)
+                cat_col = random.choice(self.categorical_columns)
                 self.perturbations += [
-                ('missing_MCAR', MissingValues(fraction, cat_col, 'NULL', 'MCAR')),
-                ('missing_MAR', MissingValues(fraction, cat_col, 'NULL', 'MAR')),
-                ('missing_MNAR', MissingValues(fraction, cat_col, 'NULL', 'MNAR'))
+                ('missing_MCAR', corruptions.missing.MissingValues(fraction, cat_col, '', 'MCAR')),
+                ('missing_MAR', corruptions.missing.MissingValues(fraction, cat_col, '', 'MAR')),
+                ('missing_MNAR', corruptions.missing.MissingValues(fraction, cat_col, '', 'MNAR'))
                 ]
 
                 self.perturbations += [
-                    ('missing_high_entropy', MissingValuesHighEntropy(fraction, pipeline, [cat_col], [num_col])),
-                    ('missing_low_entropy', MissingValuesLowEntropy(fraction, pipeline, [cat_col], [num_col]))
+                    ('missing_high_entropy', corruptions.missing.MissingValuesHighEntropy(fraction, pipeline, [cat_col], [num_col])),
+                    ('missing_low_entropy', corruptions.missing.MissingValuesLowEntropy(fraction, pipeline, [cat_col], [num_col]))
                 ]
+                
+                text_col = random.choice(self.text_columns)
+                self.perturbations.append(('broken_characters', 
+                            corruptions.text.BrokenCharacters(text_col, fraction)))
 
     @staticmethod
     def compute_ppp_features(predictions):
@@ -83,9 +91,7 @@ class PipelineWithPPP:
         meta_scores = []
         for perturbation in self.perturbations:
             df_perturbed = perturbation[1](X_df)
-      
             predictions = self.pipeline.predict_proba(df_perturbed)
-            
             meta_features.append(self.compute_ppp_features(predictions))
             meta_scores.append(self.pipeline.score(df_perturbed, y))
  
