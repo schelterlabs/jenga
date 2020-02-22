@@ -19,7 +19,7 @@ class VideogameReviewsTask:
                    'review_date']
 
         raw_data = pd.read_csv('data/reviews/2015-05-videogames.tsv', sep='\t', names=columns)
-        raw_data.drop(['total_votes'], axis=1)
+        raw_data = raw_data.drop(['total_votes'], axis=1)
 
         raw_data[['product_title', 'review_headline', 'review_body']] = raw_data[
             ['product_title', 'review_headline', 'review_body']].fillna(value='')
