@@ -98,15 +98,62 @@ class PredictMovieRatingsTask:
         self.min_rating = min(ratings_and_genres['rating'])
         self.max_rating = max(ratings_and_genres['rating'])
 
-        self.train_data = ratings_and_genres[ratings_and_genres.year < 2018].copy(deep=True)
-        self.train_data.drop(['rating'], axis=1, inplace=True)
+        self.__interactions = []
+        self.__ratings = []
 
-        self.train_ratings = ratings_and_genres[ratings_and_genres.year < 2018].rating
+        for year_start, year_end in [(1996, 2016), (2016, 2017), (2017, 2018), (2018, 2019)]:
+            interactions, ratings = self.__slice_out_data(ratings_and_genres, year_start, year_end)
+            self.__interactions.append(interactions)
+            self.__ratings.append(ratings)
 
-        self.test_data = ratings_and_genres[ratings_and_genres.year > 2017].copy(deep=True)
-        self.test_data.drop(['rating'], axis=1, inplace=True)
+        self.__current_slice = -1
 
-        self.__test_ratings = ratings_and_genres[ratings_and_genres.year > 2017].rating
+    def advance_current_year(self):
+        if self.__current_slice < len(self.__interactions) - 2:
+            self.__current_slice += 1
+            return True
+        else:
+            return False
+
+    def current_new_train_data(self):
+        return self.__interactions[self.__current_slice].copy(deep=True)
+
+    def current_new_train_ratings(self):
+        return np.copy(self.__ratings[self.__current_slice])
+
+    def current_test_data(self):
+        return self.__interactions[self.__current_slice + 1].copy(deep=True)
+
+    def current_accumulated_train_data(self):
+
+        train_data = None
+
+        for index in range(0, self.__current_slice + 1):
+            if train_data is None:
+                train_data = self.__interactions[index].copy(deep=True)
+            else:
+                train_data = train_data.append(self.__interactions[index].copy(deep=True))
+
+        return train_data
+
+    def current_accumulated_train_ratings(self):
+
+        train_ratings = None
+
+        for index in range(0, self.__current_slice + 1):
+            if train_ratings is None:
+                train_ratings = np.copy(self.__ratings[index])
+            else:
+                train_ratings = np.concatenate((train_ratings, np.copy(self.__ratings[index])), axis=None)
+
+        return train_ratings
+
+    def __slice_out_data(self, all_data, year_start_inclusive, year_end_exclusive):
+        data = all_data[(all_data.year >= year_start_inclusive) & (all_data.year < year_end_exclusive)].copy(deep=True)
+        ratings = data.copy(deep=True).rating
+        data.drop(['rating'], axis=1, inplace=True)
+
+        return data, ratings
 
     def fit_baseline_model(self, train_data, train_ratings):
         n_factors = 20
@@ -150,4 +197,4 @@ class PredictMovieRatingsTask:
         return PreprocessingDecorator(model)
 
     def score_on_test_ratings(self, predicted_ratings):
-        return mean_squared_error(self.__test_ratings, predicted_ratings, squared=False)
+        return mean_squared_error(self.__ratings[self.__current_slice + 1], predicted_ratings, squared=True)
