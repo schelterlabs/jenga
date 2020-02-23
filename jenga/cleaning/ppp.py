@@ -26,7 +26,7 @@ class PipelineWithPPP:
                 categorical_columns = [],
                 text_columns = [],
                 num_repetitions=5, 
-                perturbation_fractions=[.1, .2, .5, .9]):
+                perturbation_fractions=[.5, .7, .9]):
         self.pipeline = pipeline
         self.num_repetitions = num_repetitions
         self.perturbation_fractions = perturbation_fractions

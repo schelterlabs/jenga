@@ -1,5 +1,6 @@
 import pandas as pd
 from datawig import SimpleImputer
+from datawig.utils import set_stream_log_level
 
 class Imputation:
     def __init__(self, categorical_columns, numerical_columns):
@@ -23,6 +24,7 @@ class DatawigImputation(Imputation):
         for c in self.categorical_columns + self.numerical_columns:
             input_cols = list(set(df.columns) - set([c]))
             imputer = SimpleImputer(input_columns=input_cols, output_column=c)
+            set_stream_log_level("ERROR")
             missing = df[c].isnull()
             imputer = imputer.fit(df.loc[~missing, :])
             print(f"Imputing {missing.sum()} missing values in column {c}")
