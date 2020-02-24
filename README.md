@@ -7,7 +7,8 @@ Its goal is to help find methods to detect such errors early and make models rob
 notebooks showcasing the different tasks and data corruptions covered in __Jenga__:
 
  * [Predicting the helpfulness of video game reviews](example-reviews.ipynb)
- * [Distinguishing images of sneakers from images of ankle boots](example-shows.ipynb)
+ * [Distinguishing images of sneakers from images of ankle boots](example-shoes.ipynb)
+ * [Predicting future movie ratings](example-movieratings.ipynb)
 
 __Jenga__ is part of our ongoing research efforts:
 
