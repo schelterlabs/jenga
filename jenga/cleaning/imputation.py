@@ -26,8 +26,11 @@ class DatawigImputation(Imputation):
             imputer = SimpleImputer(input_columns=input_cols, output_column=c)
             set_stream_log_level("ERROR")
             missing = df[c].isnull()
-            imputer = imputer.fit(df.loc[~missing, :])
-            print(f"Imputing {missing.sum()} missing values in column {c}")
-            df_tmp = imputer.predict(df)
-            df[c] = df_tmp[c + "_imputed"]
+            if missing.sum()>0:
+                imputer = imputer.fit(df.loc[~missing, :])
+                print(f"Imputing {missing.sum()} missing values in column {c}")
+                df_tmp = imputer.predict(df)
+                df[c] = df_tmp[c + "_imputed"]
+            else:
+                print(f"no missing values detected in column {c}")
         return df

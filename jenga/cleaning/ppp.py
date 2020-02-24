@@ -119,5 +119,8 @@ class PipelineWithPPP:
         return self
 
     def predict_ppp(self, X_df):
+        X_df[self.numerical_columns] = X_df[self.numerical_columns].fillna(0)
+        # X_df[self.categorical_columns] = X_df[self.categorical_columns].fillna('')
+        # X_df[self.text_columns] = X_df[self.text_columns].fillna('')
         meta_features = self.compute_ppp_features(self.pipeline.predict_proba(X_df))
         return self.meta_regressor.predict(meta_features.reshape(1, -1))[0]

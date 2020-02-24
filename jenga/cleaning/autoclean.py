@@ -24,7 +24,7 @@ class AutoClean:
             categorical_columns = self.categorical_columns,
             text_columns = self.text_columns,
             num_repetitions=3,
-            perturbation_fractions=[.1,.5,.9]).fit_ppp(train_data, train_labels)
+            perturbation_fractions=[.5,.9]).fit_ppp(train_data, train_labels)
 
 
     def __call__(self, df):
@@ -40,7 +40,7 @@ class AutoClean:
         for c in self.cleaners:
             df_cleaned = c(self.categorical_columns, self.numerical_columns)(df.copy(deep=True))
             cleaned_score = self.ppp_model.predict_ppp(df_cleaned)
-            print(f"PPP score with cleaning {c.__class__.__name__}: {cleaned_score}")
+            print(f"PPP score with cleaning {c}: {cleaned_score}")
             cleaner_results.append(cleaned_score)
 
         best_cleaning_idx = pd.Series(cleaner_results).argmax()
