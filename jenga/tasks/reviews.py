@@ -8,6 +8,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
 
 
 class VideogameReviewsTask:
@@ -19,7 +20,7 @@ class VideogameReviewsTask:
                    'review_date']
 
         self.numerical_attributes = ['star_rating', 'total_votes']
-        self.categorical_attributes = ['vine', 'verified_purchase']
+        self.categorical_attributes = ['vine', 'verified_purchase', 'customer_id', 'review_id', 'product_id', 'product_parent']
         self.text_attributes = 'title_and_review_text'
 
         raw_data = pd.read_csv('data/reviews/2015-05-videogames.tsv', sep='\t', names=columns)
@@ -105,21 +106,29 @@ class VideogameReviewsTask:
 
     def fit_baseline_model(self, train_data, train_labels):
 
+        numeric_transformer = Pipeline(steps=[
+            ('imputer', SimpleImputer(strategy='constant', fill_value=0)),
+            ('scaler', StandardScaler())])
+
+        categorical_transformer = Pipeline(steps=[
+            ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
+            ('onehot', OneHotEncoder(handle_unknown='ignore'))])
+
         feature_transformation = ColumnTransformer(transformers=[
-            ('numerical_features', StandardScaler(), self.numerical_attributes),
-            ('categorical_features', OneHotEncoder(handle_unknown='ignore'), self.categorical_attributes),
-            ('textual_features', HashingVectorizer(ngram_range=(1, 3), n_features=10000), self.text_attributes)
+            ('numerical_features', numeric_transformer, self.numerical_attributes),
+            ('categorical_features', categorical_transformer, self.categorical_attributes),
+            ('textual_features', HashingVectorizer(ngram_range=(1, 3), n_features=2**15), self.text_attributes)
         ], sparse_threshold=1.0)
 
         param_grid = {
             'learner__loss': ['log'],
-            'learner__penalty': ['l2', 'l1'],
-            'learner__alpha': [0.0001, 0.001, 0.01, 0.1]
+            'learner__penalty': ['l2'],
+            'learner__alpha': [1e-5, 1e-3]
         }
 
         pipeline = Pipeline([
             ('features', feature_transformation),
             ('learner', SGDClassifier(max_iter=1000))])
 
-        search = GridSearchCV(pipeline, param_grid, scoring='roc_auc', cv=5, n_jobs=-1)
+        search = GridSearchCV(pipeline, param_grid, scoring='roc_auc', cv=2, n_jobs=1)
         return search.fit(train_data, train_labels)

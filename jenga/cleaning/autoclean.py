@@ -12,7 +12,7 @@ class AutoClean:
                     text_columns=[],
                     cleaners=[
                         SimpleImputation,
-                        DatawigImputation
+                        #DatawigImputation
                     ]):
         
         self.categorical_columns = categorical_columns
@@ -23,8 +23,8 @@ class AutoClean:
             numerical_columns = self.numerical_columns,
             categorical_columns = self.categorical_columns,
             text_columns = self.text_columns,
-            num_repetitions=3,
-            perturbation_fractions=[.5,.9]).fit_ppp(train_data, train_labels)
+            num_repetitions=2,
+            perturbation_fractions=[.5,.7,.9]).fit_ppp(train_data, train_labels)
 
 
     def __call__(self, df):

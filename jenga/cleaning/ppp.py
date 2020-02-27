@@ -82,9 +82,9 @@ class PipelineWithPPP:
         if predictions.shape[-1] > 1:
             probs_class_b = np.transpose(predictions)[1]
             features_b = np.percentile(probs_class_b, np.arange(0, 101, 5))
-            return np.concatenate((features_a, features_b), axis=0)
+            return np.clip(np.concatenate((features_a, features_b), axis=0), a_min=np.finfo(np.float32).min, a_max=np.finfo(np.float32).max)
         else:
-            return features_a
+            return np.clip(features_a, a_min=np.finfo(np.float32).min, a_max=np.finfo(np.float32).max)
 
     def fit_ppp(self, X_df, y):
 
