@@ -11,6 +11,8 @@ from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.pipeline import Pipeline
 
+from lime import lime_tabular
+
 from ..corruptions.numerical import SwappedValues, Outliers, Scaling
 from ..corruptions.text import BrokenCharacters
 from ..corruptions.missing import ( MissingValuesHighEntropy, 
@@ -76,16 +78,11 @@ class PipelineWithPPP:
                     self.perturbations.append(('broken_characters', BrokenCharacters(text_col, fraction)))
 
     @staticmethod
-    def compute_ppp_features(predictions):
-        probs_class_a = np.transpose(predictions)[0]
-        features_a = np.percentile(probs_class_a, np.arange(0, 101, 5))
-        if predictions.shape[-1] > 1:
-            probs_class_b = np.transpose(predictions)[1]
-            features_b = np.percentile(probs_class_b, np.arange(0, 101, 5))
-            return np.clip(np.concatenate((features_a, features_b), axis=0), a_min=np.finfo(np.float32).min, a_max=np.finfo(np.float32).max)
-        else:
-            return np.clip(features_a, a_min=np.finfo(np.float32).min, a_max=np.finfo(np.float32).max)
-
+    def compute_ppp_features(predictions, bins_per_class_output=5):
+        return np.percentile(predictions, 
+                             np.arange(0, 101, bins_per_class_output),
+                             axis=0).flatten()
+        
     def fit_ppp(self, X_df, y):
 
         print(f"Generating perturbed training data on {len(X_df)} rows ...")
@@ -120,7 +117,35 @@ class PipelineWithPPP:
 
     def predict_ppp(self, X_df):
         X_df[self.numerical_columns] = X_df[self.numerical_columns].fillna(0)
-        # X_df[self.categorical_columns] = X_df[self.categorical_columns].fillna('')
-        # X_df[self.text_columns] = X_df[self.text_columns].fillna('')
         meta_features = self.compute_ppp_features(self.pipeline.predict_proba(X_df))
         return self.meta_regressor.predict(meta_features.reshape(1, -1))[0]
+
+    def predict_and_explain_ppp(self, 
+                                X_df,
+                                num_percentile_neighbors = 5,
+                                num_top_meta_features = 3):
+        # compute pipeline performance predictions with meta regressor
+        pipeline_predictions = self.pipeline.predict_proba(X_df)
+        meta_features = self.compute_ppp_features(pipeline_predictions)
+        pipeline_performance_prediction = self.meta_regressor.predict(meta_features.reshape(1, -1))[0]
+        
+        # compute importances of percentiles (here: assuming random forest regressor
+        # could be done with LIME or other explanability methods)
+        rf = self.meta_regressor.best_estimator_.steps[-1][1]
+        # find the top most important features, representing (percentile,pipeline-output-dim) tuples
+        top_meta_feature_idx = rf.feature_importances_.argsort()[::-1][:num_top_meta_features]
+        # get number of percentile bins (could also be stored in compute_ppp_features)
+        num_perc_bins = int(meta_features.shape[0] / pipeline_predictions.shape[-1])
+
+        relevant_samples = []
+        # for each of the top features
+        for important_feature_idx in top_meta_feature_idx:
+            # get the relevant percentile
+            important_percentile = meta_features[important_feature_idx]
+            # find the original pipeline output dimension 
+            original_feature_idx = int(np.floor(important_feature_idx / num_perc_bins))
+            # find the datapoints closest to that percentile in that dimension
+            percentile_neighbor_idx = np.abs((pipeline_predictions[:,original_feature_idx]-important_percentile)).argsort()[:num_percentile_neighbors]
+            relevant_samples += percentile_neighbor_idx.tolist()
+
+        return pipeline_performance_prediction, relevant_samples
