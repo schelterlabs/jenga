@@ -3,12 +3,13 @@ from datawig import SimpleImputer
 from datawig.utils import set_stream_log_level
 
 class Imputation:
-    def __init__(self, categorical_columns, numerical_columns):
+    def __init__(self, categorical_columns, numerical_columns, text_columns=None):
         self.categorical_columns = categorical_columns
         self.numerical_columns = numerical_columns
+        self.text_columns = text_columns
     
     def __call__(self, df):
-        pass
+        return df
 
 class SimpleImputation(Imputation):
     def __call__(self, df):
