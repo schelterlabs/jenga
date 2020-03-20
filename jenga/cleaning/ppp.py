@@ -28,7 +28,8 @@ class PipelineWithPPP:
                 categorical_columns = [],
                 text_columns = [],
                 num_repetitions=5, 
-                perturbation_fractions=[.5, .7, .9]):
+                perturbation_fractions=[.5, .7, .9],
+                verbose=False):
         self.pipeline = pipeline
         self.num_repetitions = num_repetitions
         self.perturbation_fractions = perturbation_fractions
@@ -37,17 +38,22 @@ class PipelineWithPPP:
         self.categorical_columns = categorical_columns
         self.numerical_columns = numerical_columns
         self.text_columns = text_columns
+        self.verbose = verbose
         
         self.perturbations = []
         for _ in range(self.num_repetitions):
             for fraction in self.perturbation_fractions:
-                column_pairs = list(itertools.combinations(self.numerical_columns, 2))
-                swap_affected_column_pair = random.choice(column_pairs)
-                self.perturbations.append(('swapped', SwappedValues(fraction, swap_affected_column_pair)))
-                
-                column_pairs = list(itertools.combinations(self.categorical_columns, 2))
-                swap_affected_column_pair = random.choice(column_pairs)
-                self.perturbations.append(('swapped', SwappedValues(fraction, swap_affected_column_pair)))
+                if len(self.numerical_columns)>1:
+                    column_pairs = list(itertools.combinations(self.numerical_columns, 2))
+                    swap_affected_column_pair = random.choice(column_pairs)
+                    self.perturbations.append(('swapped', SwappedValues(fraction, swap_affected_column_pair)))
+                    
+
+                if len(self.categorical_columns)>1:
+                    column_pairs = list(itertools.combinations(self.categorical_columns, 2))
+                    swap_affected_column_pair = random.choice(column_pairs)
+                    self.perturbations.append(('swapped', SwappedValues(fraction, swap_affected_column_pair)))
+                    
 
                 if self.numerical_columns:
                     num_col = random.choice(self.numerical_columns)
@@ -57,22 +63,21 @@ class PipelineWithPPP:
                     ('outlier', Outliers(fraction, [num_col])),
                     ('missing_MCAR', MissingValues(fraction, num_col, 0, 'MCAR')),
                     ('missing_MAR', MissingValues(fraction, num_col, 0, 'MAR')),
-                    ('missing_MNAR', MissingValues(fraction, num_col, 0, 'MNAR'))
+                    ('missing_MNAR', MissingValues(fraction, num_col, 0, 'MNAR')),
+                    ('missing_high_entropy', MissingValuesHighEntropy(fraction, pipeline, [], [random.choice(self.numerical_columns)])),
+                    ('missing_low_entropy', MissingValuesLowEntropy(fraction, pipeline, [], [random.choice(self.numerical_columns)]))
                     ]
+
                 if self.categorical_columns:
                     cat_col = random.choice(self.categorical_columns)
                     self.perturbations += [
                     ('missing_MCAR', MissingValues(fraction, cat_col, '', 'MCAR')),
                     ('missing_MAR', MissingValues(fraction, cat_col, '', 'MAR')),
-                    ('missing_MNAR', MissingValues(fraction, cat_col, '', 'MNAR'))
+                    ('missing_MNAR', MissingValues(fraction, cat_col, '', 'MNAR')),
+                    ('missing_high_entropy', MissingValuesHighEntropy(fraction, pipeline, [random.choice(self.categorical_columns)], [])),
+                    ('missing_low_entropy', MissingValuesLowEntropy(fraction, pipeline, [random.choice(self.categorical_columns)], []))
                     ]
 
-                if self.categorical_columns or self.numerical_columns:
-                    self.perturbations += [
-                        ('missing_high_entropy', MissingValuesHighEntropy(fraction, pipeline, [random.choice(self.categorical_columns)], [random.choice(self.numerical_columns)])),
-                        ('missing_low_entropy', MissingValuesLowEntropy(fraction, pipeline, [random.choice(self.categorical_columns)], [random.choice(self.numerical_columns)]))
-                    ]
-                    
                 if self.text_columns:
                     text_col = random.choice([self.text_columns])
                     self.perturbations.append(('broken_characters', BrokenCharacters(text_col, fraction)))
@@ -82,15 +87,18 @@ class PipelineWithPPP:
         return np.percentile(predictions, 
                              np.arange(0, 101, bins_per_class_output),
                              axis=0).flatten()
-        
+    def _print(self, s):
+        if self.verbose:
+            print(s)
+
     def fit_ppp(self, X_df, y):
 
-        print(f"Generating perturbed training data on {len(X_df)} rows ...")
+        self._print(f"Generating perturbed training data on {len(X_df)} rows ...")
         meta_features = []
         meta_scores = []
         for idx,perturbation in enumerate(self.perturbations):
             col = [v for k,v in perturbation[1].__dict__.items() if 'colum' in k][0]
-            print(f'\t... perturbation {idx}/{len(self.perturbations)}: {perturbation[0]}, col {col}, fraction: {perturbation[1].fraction}')
+            self._print(f'\t... perturbation {idx}/{len(self.perturbations)}: {perturbation[0]}, col {col}, fraction: {perturbation[1].fraction}')
             df_perturbed = perturbation[1](X_df)
             predictions = self.pipeline.predict_proba(df_perturbed)
             meta_features.append(self.compute_ppp_features(predictions))
@@ -106,7 +114,7 @@ class PipelineWithPPP:
            ('learner', RandomForestRegressor(criterion='mae'))
         ])
 
-        print("Training performance predictor...")
+        self._print("Training performance predictor...")
         self.meta_regressor = GridSearchCV(
                                 meta_regressor_pipeline, 
                                 param_grid, 
