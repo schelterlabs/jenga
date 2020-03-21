@@ -28,11 +28,19 @@ class SwappedValues:
 
         return df
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}: {self.__dict__}"
+
+
 class Outliers:
 
     def __init__(self, fraction, columns):
         self.fraction = fraction
         self.columns = columns
+    
+    def __repr__(self):
+        return f"{self.__class__.__name__}: {self.__dict__}"
+
 
     def __call__(self, clean_df):
         # we operate on a copy of the data
@@ -68,3 +76,6 @@ class Scaling:
                 df.loc[rows, column] *= scale_factor
 
         return df
+    
+    def __repr__(self):
+        return f"{self.__class__.__name__}: {self.__dict__}"

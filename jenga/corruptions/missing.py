@@ -105,3 +105,6 @@ class MissingValues:
         else:
             print('missingness should be in MCAR, MAR or MNAR')
         return corrupted_data
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}: {self.__dict__}"

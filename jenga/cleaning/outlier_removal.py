@@ -38,6 +38,12 @@ class OutlierRemoval:
     def __call__(self, df):
         return df
 
+     
+    def __repr__(self):
+        return f"{self.__class__.__name__}: {self.__dict__}"
+
+
+
 class PyODKNN(OutlierRemoval):
     def __call__(self, df):
 
@@ -65,11 +71,11 @@ class SKLearnIsolationForest(OutlierRemoval):
                 df['OutlierRemoval_text_dummy_column'] += " " + df[text_column]
 
         X = self.feature_transformation.fit_transform(df)
-        clf = IsolationForest(random_state=0)
+        clf = IsolationForest(random_state=0, contamination=.1)
         df['outlier_score'] = clf.fit_predict(X) < 0
 
         if self.text_columns:
             df = df.drop(['OutlierRemoval_text_dummy_column'], axis=1)
         
         return df
-
+   

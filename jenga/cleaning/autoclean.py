@@ -61,11 +61,11 @@ class AutoClean:
                                 self.numerical_columns)(df_copy)
 
                 cleaned_score = self.ppp_model.predict_ppp(df_cleaned)
-                self._print(f"PPP score with cleaning {c}: {cleaned_score}")
+                self._print(f"PPP score with cleaning {c}: {cleaned_score:0.3}")
                 cleaner_results_ppp.append(cleaned_score)
                 if test_labels is not None:
                     cleaned_true_score = self.ppp_model.pipeline.score(df_cleaned, test_labels)
-                    self._print(f"True score with cleaning {c}: {cleaned_true_score}")
+                    self._print(f"True score with cleaning {c}: {cleaned_true_score:0.3}")
                     cleaner_results_true.append(cleaned_true_score)
 
         best_cleaning_idx = pd.Series(cleaner_results_ppp).idxmax()
@@ -82,7 +82,7 @@ class AutoClean:
             df = best_imputation(self.categorical_columns, 
                             self.numerical_columns,self.text_columns)(df)
 
-            self._print(f"Best outlier removal {best_outlier_removal.__class__} + best imputation {best_imputation.__class__}: {best_score}")
+            self._print(f"Best outlier removal {best_outlier_removal.__class__} + best imputation {best_imputation.__class__}: {best_score:0.3}")
         else:
             self._print(f"Cleaning did not improve score")
         

@@ -10,6 +10,9 @@ class Imputation:
     
     def __call__(self, df):
         return df
+     
+    def __repr__(self):
+        return f"{self.__class__.__name__}: {self.__dict__}"
 
 class SimpleImputation(Imputation):
     def __call__(self, df):

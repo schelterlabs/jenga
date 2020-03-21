@@ -14,6 +14,7 @@ from sklearn.pipeline import Pipeline
 from lime import lime_tabular
 
 from ..corruptions.numerical import SwappedValues, Outliers, Scaling
+from ..corruptions.categorical import SwapValues
 from ..corruptions.text import BrokenCharacters
 from ..corruptions.missing import ( MissingValuesHighEntropy, 
                                   MissingValuesLowEntropy, 
@@ -71,6 +72,7 @@ class PipelineWithPPP:
                 if self.categorical_columns:
                     cat_col = random.choice(self.categorical_columns)
                     self.perturbations += [
+                    ('swap_categorical_values', SwapValues(fraction, cat_col)),
                     ('missing_MCAR', MissingValues(fraction, cat_col, '', 'MCAR')),
                     ('missing_MAR', MissingValues(fraction, cat_col, '', 'MAR')),
                     ('missing_MNAR', MissingValues(fraction, cat_col, '', 'MNAR')),
