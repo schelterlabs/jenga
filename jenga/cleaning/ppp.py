@@ -25,7 +25,7 @@ class PipelineWithPPP:
 
     def __init__(self, 
                 pipeline, 
-                numerical_columns = [],
+                numeric_columns = [],
                 categorical_columns = [],
                 text_columns = [],
                 num_repetitions=5, 
@@ -35,17 +35,17 @@ class PipelineWithPPP:
         self.num_repetitions = num_repetitions
         self.perturbation_fractions = perturbation_fractions
         # assuming the first step is a ColumnTransformer with transformers named 
-        # 'categorical_columns' or 'numerical_columns'
+        # 'categorical_columns' or 'numeric_columns'
         self.categorical_columns = categorical_columns
-        self.numerical_columns = numerical_columns
+        self.numeric_columns = numeric_columns
         self.text_columns = text_columns
         self.verbose = verbose
         
         self.perturbations = []
         for _ in range(self.num_repetitions):
             for fraction in self.perturbation_fractions:
-                if len(self.numerical_columns)>1:
-                    column_pairs = list(itertools.combinations(self.numerical_columns, 2))
+                if len(self.numeric_columns)>1:
+                    column_pairs = list(itertools.combinations(self.numeric_columns, 2))
                     swap_affected_column_pair = random.choice(column_pairs)
                     self.perturbations.append(('swapped', SwappedValues(fraction, swap_affected_column_pair)))
                     
@@ -56,8 +56,8 @@ class PipelineWithPPP:
                     self.perturbations.append(('swapped', SwappedValues(fraction, swap_affected_column_pair)))
                     
 
-                if self.numerical_columns:
-                    num_col = random.choice(self.numerical_columns)
+                if self.numeric_columns:
+                    num_col = random.choice(self.numeric_columns)
                 
                     self.perturbations += [
                     ('scaling', Scaling(fraction, [num_col])),
@@ -65,8 +65,8 @@ class PipelineWithPPP:
                     ('missing_MCAR', MissingValues(fraction, num_col, 0, 'MCAR')),
                     ('missing_MAR', MissingValues(fraction, num_col, 0, 'MAR')),
                     ('missing_MNAR', MissingValues(fraction, num_col, 0, 'MNAR')),
-                    ('missing_high_entropy', MissingValuesHighEntropy(fraction, pipeline, [], [random.choice(self.numerical_columns)])),
-                    ('missing_low_entropy', MissingValuesLowEntropy(fraction, pipeline, [], [random.choice(self.numerical_columns)]))
+                    ('missing_high_entropy', MissingValuesHighEntropy(fraction, pipeline, [], [random.choice(self.numeric_columns)])),
+                    ('missing_low_entropy', MissingValuesLowEntropy(fraction, pipeline, [], [random.choice(self.numeric_columns)]))
                     ]
 
                 if self.categorical_columns:
@@ -126,7 +126,7 @@ class PipelineWithPPP:
         return self
 
     def predict_ppp(self, X_df):
-        X_df[self.numerical_columns] = X_df[self.numerical_columns].fillna(0)
+        X_df[self.numeric_columns] = X_df[self.numeric_columns].fillna(0)
         meta_features = self.compute_ppp_features(self.pipeline.predict_proba(X_df))
         return self.meta_regressor.predict(meta_features.reshape(1, -1))[0]
 

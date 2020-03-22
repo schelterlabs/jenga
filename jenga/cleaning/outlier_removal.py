@@ -8,7 +8,7 @@ from sklearn.impute import SimpleImputer
 from pyod.models.knn import KNN
 
 class OutlierRemoval:
-    def __init__(self, categorical_columns, numerical_columns, text_columns):
+    def __init__(self, categorical_columns, numeric_columns, text_columns):
         self.categorical_columns = categorical_columns
         self.numerical_columns = numerical_columns
         self.text_columns = text_columns
@@ -34,15 +34,13 @@ class OutlierRemoval:
             
         self.feature_transformation = ColumnTransformer(transformers=transformers, 
                                                     sparse_threshold=1.0)
-
-    def __call__(self, df):
-        return df
-
      
     def __repr__(self):
         return f"{self.__class__.__name__}: {self.__dict__}"
 
-
+class NoOutlierRemoval(OutlierRemoval):
+     def __call__(self, df):
+        return df
 
 class PyODKNN(OutlierRemoval):
     def __call__(self, df):
