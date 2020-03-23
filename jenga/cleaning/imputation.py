@@ -13,7 +13,7 @@ class Imputation:
 
 class NoImputation(Imputation):
     def __call__(self, df):
-        return df.dropna(how='all')
+        return df
 
 class SimpleImputation(Imputation):
     def __call__(self, df):

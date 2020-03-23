@@ -7,15 +7,15 @@ class MissingValuesHighEntropy:
                     fraction, 
                     model, 
                     categorical_columns, 
-                    numerical_columns,
+                    numeric_columns,
                     categorical_value_to_put_in='NULL',
-                    numerical_value_to_put_in=0):
+                    numeric_value_to_put_in=0):
         self.fraction = fraction
         self.model = model
         self.categorical_value_to_put_in = categorical_value_to_put_in
-        self.numerical_value_to_put_in = numerical_value_to_put_in
+        self.numeric_value_to_put_in = numeric_value_to_put_in
         self.categorical_columns = categorical_columns
-        self.numerical_columns = numerical_columns
+        self.numeric_columns = numeric_columns
 
     def __call__(self, clean_df):
         # we operate on a copy of the data
@@ -30,7 +30,7 @@ class MissingValuesHighEntropy:
             if pd.api.types.is_categorical(df[c]):
                 df[c].cat.add_categories([self.categorical_value_to_put_in], inplace=True)
         df.loc[df.index[least_confident], self.categorical_columns] = self.categorical_value_to_put_in
-        df.loc[df.index[least_confident], self.numerical_columns] = self.numerical_value_to_put_in
+        df.loc[df.index[least_confident], self.numeric_columns] = self.numeric_value_to_put_in
 
         return df
 
@@ -40,15 +40,15 @@ class MissingValuesLowEntropy:
                     fraction, 
                     model, 
                     categorical_columns, 
-                    numerical_columns,
+                    numeric_columns,
                     categorical_value_to_put_in='',
-                    numerical_value_to_put_in=0):
+                    numeric_value_to_put_in=0):
         self.fraction = fraction
         self.model = model
         self.categorical_value_to_put_in = categorical_value_to_put_in
-        self.numerical_value_to_put_in = numerical_value_to_put_in
+        self.numeric_value_to_put_in = numeric_value_to_put_in
         self.categorical_columns = categorical_columns
-        self.numerical_columns = numerical_columns
+        self.numeric_columns = numeric_columns
 
     def __call__(self, clean_df):
         # we operate on a copy of the data
@@ -63,8 +63,8 @@ class MissingValuesLowEntropy:
             if pd.api.types.is_categorical(df[c]):
                 df[c].cat.add_categories([self.categorical_value_to_put_in], inplace=True)
             df.loc[df.index[most_confident], c] = self.categorical_value_to_put_in
-        for c in self.numerical_columns:
-            df.loc[df.index[most_confident], c] = self.numerical_value_to_put_in
+        for c in self.numeric_columns:
+            df.loc[df.index[most_confident], c] = self.numeric_value_to_put_in
 
         return df
 
@@ -79,10 +79,7 @@ class MissingValues:
     def __call__(self, data):
         corrupted_data = data.copy(deep=True)
         if self.missingness == 'MCAR':
-            idx = np.random.rand(len(data)) > self.fraction
-            if pd.api.types.is_categorical(corrupted_data[self.column]):
-                corrupted_data[self.column].cat.add_categories([self.na_value], inplace=True)
-            corrupted_data.loc[idx, [self.column]] = self.na_value
+            missing_indices = np.random.rand(len(data)) > self.fraction
         elif self.missingness == 'MAR':
             depends_on_col = np.random.choice(list(set(data.columns) - set([self.column])))
             # pick a random percentile of values in other column
@@ -90,20 +87,19 @@ class MissingValues:
             perc_lower_start = np.random.randint(0, len(data)-n_values_to_discard)
             perc_idx = range(perc_lower_start, perc_lower_start + n_values_to_discard)
             missing_indices = corrupted_data[depends_on_col].sort_values().iloc[perc_idx].index
-            if pd.api.types.is_categorical(corrupted_data[self.column]):
-                corrupted_data[self.column].cat.add_categories([self.na_value], inplace=True)
-            corrupted_data.loc[missing_indices, [self.column]] = self.na_value
         elif self.missingness == 'MNAR':
             # pick a random percentile of values in this column
             n_values_to_discard = int(len(data) * min(self.fraction,1.0))
             perc_lower_start = np.random.randint(0, len(data)-n_values_to_discard)
             perc_idx = range(perc_lower_start, perc_lower_start + n_values_to_discard)
             missing_indices = corrupted_data[self.column].sort_values().iloc[perc_idx].index
-            if pd.api.types.is_categorical(corrupted_data[self.column]):
-                corrupted_data[self.column].cat.add_categories([self.na_value], inplace=True)
-            corrupted_data.loc[missing_indices, [self.column]] = self.na_value
         else:
             print('missingness should be in MCAR, MAR or MNAR')
+            missing_indices = range(len(data))
+        if pd.api.types.is_categorical(corrupted_data[self.column]) and \
+                self.na_value not in corrupted_data[self.column].dtype.categories:
+                corrupted_data[self.column].cat.add_categories([self.na_value], inplace=True)
+        corrupted_data.loc[missing_indices, [self.column]] = self.na_value
         return corrupted_data
 
     def __repr__(self):

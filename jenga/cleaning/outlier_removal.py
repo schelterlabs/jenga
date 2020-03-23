@@ -10,7 +10,7 @@ from pyod.models.knn import KNN
 class OutlierRemoval:
     def __init__(self, categorical_columns, numeric_columns, text_columns):
         self.categorical_columns = categorical_columns
-        self.numerical_columns = numerical_columns
+        self.numeric_columns = numeric_columns
         self.text_columns = text_columns
     
         numeric_transformer = Pipeline(steps=[
@@ -22,7 +22,7 @@ class OutlierRemoval:
             ('onehot', OneHotEncoder(handle_unknown='ignore'))])
 
         transformers = [
-            ('numerical_features', numeric_transformer, self.numerical_columns),
+            ('numeric_features', numeric_transformer, self.numeric_columns),
             ('categorical_features', categorical_transformer, self.categorical_columns)
         ]
 

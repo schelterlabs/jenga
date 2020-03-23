@@ -13,7 +13,7 @@ from sklearn.pipeline import Pipeline
 
 from lime import lime_tabular
 
-from ..corruptions.numerical import SwappedValues, Outliers, Scaling
+from ..corruptions.numeric import SwappedValues, Outliers, Scaling
 from ..corruptions.categorical import SwapValues
 from ..corruptions.text import BrokenCharacters
 from ..corruptions.missing import ( MissingValuesHighEntropy, 
@@ -28,9 +28,10 @@ class PipelineWithPPP:
                 numeric_columns = [],
                 categorical_columns = [],
                 text_columns = [],
-                num_repetitions=5, 
-                perturbation_fractions=[.5, .7, .9],
+                num_repetitions=50, 
+                perturbation_fractions=[.1, .2, .5, .7, .9],
                 verbose=False):
+
         self.pipeline = pipeline
         self.num_repetitions = num_repetitions
         self.perturbation_fractions = perturbation_fractions
@@ -98,7 +99,7 @@ class PipelineWithPPP:
         self._print(f"Generating perturbed training data on {len(X_df)} rows ...")
         meta_features = []
         meta_scores = []
-        for idx,perturbation in enumerate(self.perturbations):
+        for idx, perturbation in enumerate(self.perturbations):
             col = [v for k,v in perturbation[1].__dict__.items() if 'colum' in k][0]
             self._print(f'\t... perturbation {idx}/{len(self.perturbations)}: {perturbation[0]}, col {col}, fraction: {perturbation[1].fraction}')
             df_perturbed = perturbation[1](X_df)
@@ -126,7 +127,6 @@ class PipelineWithPPP:
         return self
 
     def predict_ppp(self, X_df):
-        X_df[self.numeric_columns] = X_df[self.numeric_columns].fillna(0)
         meta_features = self.compute_ppp_features(self.pipeline.predict_proba(X_df))
         return self.meta_regressor.predict(meta_features.reshape(1, -1))[0]
 
