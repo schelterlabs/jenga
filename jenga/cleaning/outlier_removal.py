@@ -176,9 +176,10 @@ class AutoGluonCleaner(OutlierRemoval):
         for col in self.categorical_columns + self.numeric_columns:
             y_pred = self.predictors[col].predict(df)
             y_test = df[col] 
-            perf = self.predictors[col].evaluate_predictions(y_true=y_test, y_pred=y_pred, auxiliary_metrics=True)
+            valid = y_test.isnull()==False
+            perf = self.predictors[col].evaluate_predictions(y_true=y_test[valid], y_pred=y_pred[valid], auxiliary_metrics=True)
             if 'root_mean_squared_error' in perf:
-                idx_too_wrong = np.sqrt((y_pred - y_test)**2) > perf['root_mean_squared_error'] * self.numerical_std_error_threshold
+                idx_too_wrong = np.sqrt((y_pred - y_test.fillna(0))**2) > perf['root_mean_squared_error'] * self.numerical_std_error_threshold
             else:
                 not_interesting = ['accuracy', 'macro avg', 'weighted avg']
                 labels = [k for k in perf['<lambda>'].keys() if k not in not_interesting]
