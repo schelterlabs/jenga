@@ -1,4 +1,10 @@
 import pandas as pd
+
+import autogluon as ag
+from autogluon import TabularPrediction as task
+import numpy as np
+from typing import Any, List, Tuple, Dict
+
 from datawig import SimpleImputer
 from datawig.utils import set_stream_log_level
 
@@ -22,6 +28,27 @@ class SimpleImputation(Imputation):
         
         for c in self.numeric_columns:
             df.loc[df[c].isnull(),[c]] = df[c].dropna().median()
+        return df
+
+
+class AutoGluonImputation(Imputation):
+    
+    def __call__(self, 
+                 df_orig: pd.DataFrame):
+        # this is just to prevent autogluon from raising type errors
+        df = df_orig.copy(deep=True)
+        for col in df.columns:
+            if pd.api.types.is_categorical_dtype(df[col]):
+                df[col] = df[col].astype(str)
+
+        observed = df.isnull() == False
+
+        for col in self.categorical_columns + self.numeric_columns:
+            if observed[col].sum() < len(df):
+                train_df = df[observed[col]]
+                test_df = df.loc[observed[col] == False, :].drop(col, axis=1)
+                predictor = task.fit(train_data=train_df, label=col)
+                df.loc[observed[col] == False, col] = predictor.predict(test_df)
         return df
 
 class DatawigImputation(Imputation):

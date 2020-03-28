@@ -1,15 +1,18 @@
 import numpy as np
 import pandas as pd
-from .imputation import SimpleImputation, DatawigImputation, NoImputation
-from .outlier_removal import PyODKNN, NoOutlierRemoval, SKLearnIsolationForest
+from .imputation import SimpleImputation, DatawigImputation, NoImputation, AutoGluonImputation
+from .outlier_removal import PyODKNN, NoOutlierRemoval, SKLearnIsolationForest, AutoGluonCleaner
 from .ppp import PipelineWithPPP
 from .cleaner import Cleaner
 
 DEFAULT_CLEANER_CANDIDATES = [
-    (NoOutlierRemoval, NoImputation),
-    (SKLearnIsolationForest, NoImputation),
-    (NoOutlierRemoval, SimpleImputation),
-    (SKLearnIsolationForest, SimpleImputation)
+    # (NoOutlierRemoval, NoImputation),
+    # (SKLearnIsolationForest, NoImputation),
+    # (NoOutlierRemoval, SimpleImputation),
+    # (SKLearnIsolationForest, SimpleImputation),
+    (NoOutlierRemoval, AutoGluonImputation),
+    (SKLearnIsolationForest, AutoGluonImputation),
+    (AutoGluonCleaner, NoImputation)
 ]
 
 class AutoClean:
@@ -23,15 +26,17 @@ class AutoClean:
                     cleaners=DEFAULT_CLEANER_CANDIDATES,
                     verbose=False):
         
-        datatypes = {
-                    'numeric_columns': numeric_columns,
-                    'categorical_columns': categorical_columns,
-                    'text_columns': text_columns
-                }
         self.verbose = verbose
 
-        self.cleaners = [Cleaner(outlier_removal=orm(**datatypes), imputation=imp(**datatypes)) \
-                            for orm, imp in cleaners]
+        self.cleaners = []
+        for orm, imp in cleaners:
+            self.cleaners.append(Cleaner(outlier_removal=orm(train_df=train_data,
+                                                             numeric_columns=numeric_columns,
+                                                             categorical_columns=categorical_columns,
+                                                             text_columns=text_columns), 
+                                         imputation=imp(numeric_columns=numeric_columns,
+                                                        categorical_columns=categorical_columns,
+                                                        text_columns=text_columns))) 
         
         self.ppp_model = PipelineWithPPP(pipeline, verbose=self.verbose, **datatypes).fit_ppp(train_data, train_labels)
 
