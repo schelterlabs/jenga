@@ -6,12 +6,12 @@ from .ppp import PipelineWithPPP
 from .cleaner import Cleaner
 
 DEFAULT_CLEANER_CANDIDATES = [
-    # (NoOutlierRemoval, NoImputation),
-    # (SKLearnIsolationForest, NoImputation),
-    # (NoOutlierRemoval, SimpleImputation),
-    # (SKLearnIsolationForest, SimpleImputation),
-    (NoOutlierRemoval, AutoGluonImputation),
-    (SKLearnIsolationForest, AutoGluonImputation),
+    (NoOutlierRemoval, NoImputation),
+    (SKLearnIsolationForest, NoImputation),
+    (NoOutlierRemoval, SimpleImputation),
+    (SKLearnIsolationForest, SimpleImputation),
+    # (NoOutlierRemoval, AutoGluonImputation),
+    # (SKLearnIsolationForest, AutoGluonImputation),
     (AutoGluonCleaner, NoImputation)
 ]
 
@@ -38,7 +38,11 @@ class AutoClean:
                                                         categorical_columns=categorical_columns,
                                                         text_columns=text_columns))) 
         
-        self.ppp_model = PipelineWithPPP(pipeline, verbose=self.verbose, **datatypes).fit_ppp(train_data, train_labels)
+        self.ppp_model = PipelineWithPPP(pipeline, 
+                                         verbose=self.verbose, 
+                                         numeric_columns=numeric_columns,
+                                         categorical_columns=categorical_columns,
+                                         text_columns=text_columns).fit_ppp(train_data, train_labels)
 
     def _print(self,s):
         if self.verbose:
