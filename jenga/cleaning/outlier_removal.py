@@ -161,9 +161,9 @@ class AutoGluonCleaner(OutlierRemoval):
         self.predictors = {}
         for col in self.categorical_columns:
             if len(df[col].unique()) < len(df):
-                self.predictors[col] = task.fit(train_data=df, label=col, problem_type='multiclass')
+                self.predictors[col] = task.fit(train_data=df, label=col, problem_type='multiclass', verbosity=0)
         for col in self.numeric_columns:
-            self.predictors[col] = task.fit(train_data=df, label=col, problem_type='regression')
+            self.predictors[col] = task.fit(train_data=df, label=col, problem_type='regression', verbosity=0)
 
     def __call__(self, df_orig: pd.DataFrame):
 
