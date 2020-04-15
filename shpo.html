@@ -13113,6 +13113,22 @@ div#notebook {
   <div tabindex="-1" id="notebook" class="border-box-sizing">
     <div class="container" id="notebook-container">
 
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Shifted-data-HyperParameter-Optimization-Without-Labels-(SHPOWL)">Shifted data HyperParameter Optimization Without Labels (SHPOWL)<a class="anchor-link" href="#Shifted-data-HyperParameter-Optimization-Without-Labels-(SHPOWL)">&#182;</a></h1><p>In real world machine learning applications we often see data shifts that impact the predictive performance of a trained ML model.</p>
+<p>These shifts can happen in the covariates (the features consumed by the ML model), that's called a covariate shift, or in the label distributions, that's called a label shift.</p>
+<p>Detecting these shifts is an active area of research (see <a href="https://arxiv.org/pdf/1802.03916.pdf">Lipton, Wang and Smola, ICML 2018</a>, <a href="http://arxiv.org/abs/1810.11953">Rabanser, Günnemann and Lipton, NIPS 2019</a>, <a href="https://ssc.io/publication/learning-to-validate-the-predictions-of-black-box-classifiers-on-unseen-data-sigmod/">Schelter, Rukat and Biessmann, SIGMOD 2020</a>).</p>
+<p>But what do you do if you have detected a shift?</p>
+<p>The usual answer is: get more data with labels that looks similar to that shifted data.</p>
+<p>Another answer is: build more robust models, that can for instance deal with covariate <a href="http://jmlr.csail.mit.edu/papers/volume10/bickel09a/bickel09a.pdf">Bickel, Brueckner and Scheffer</a>, or that use semi-supervised learning <a href="https://arxiv.org/abs/1812.05313">Zhou et al, 2018</a>.</p>
+<p>The approach we take here is slightly different. We propose to do <em>model selection at test time</em>, meaning without having access to ground truth labels.</p>
+<p>We follow the approach in <a href="https://ssc.io/publication/learning-to-validate-the-predictions-of-black-box-classifiers-on-unseen-data-sigmod/">Schelter, Rukat and Biessmann, SIGMOD 2020</a> and use their pipeline performance prediction (PPP) model to predict the predictive performance of a model at test time to pick the best model candidate.</p>
+<p>In the below toy data example, we use KNearestNeighbors and grid search to demonstrate the approach.</p>
+
+</div>
+</div>
+</div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[95]:</div>
@@ -13153,6 +13169,23 @@ div#notebook {
 </div>
 </div>
 
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Toy-Data-Example">Toy Data Example<a class="anchor-link" href="#Toy-Data-Example">&#182;</a></h1><p>Legend:</p>
+<ul>
+<li>black/white are two classes</li>
+<li>small circles: train data with fixed noise level</li>
+<li>large circles: test data with varying noise level (that's the data shift)</li>
+</ul>
+<p>A KNearestNeighbor model is trained with three different k's. Each column is a different k.</p>
+<p>To emulate the data shift in the test data, different amounts of noise are added to the generated data. Each row is a different noise level.</p>
+<p>While the pipeline performance prediction does not perform great in terms of predicting the exact test data accuracy, it does get the ranking w.r.t. the relevant hyperparameter k right.</p>
+<p>This means that the optimal k is, in this not-representative toy data example, found using PPP.</p>
+
+</div>
+</div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
