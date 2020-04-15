@@ -18,26 +18,34 @@ class VideogameReviewsTask:
                    'total_votes', 'vine', 'verified_purchase', 'review_headline', 'review_body',
                    'review_date']
 
-        raw_data = pd.read_csv('data/reviews/2015-05-videogames.tsv', sep='\t', names=columns)
+        raw_data = pd.read_csv('data/reviews/videogames.tsv', sep='\t', names=columns)
+        # We drop this column, otherwhise the prediction task is to easy
         raw_data = raw_data.drop(['total_votes'], axis=1)
 
         raw_data[['product_title', 'review_headline', 'review_body']] = raw_data[
             ['product_title', 'review_headline', 'review_body']].fillna(value='')
-        raw_data[
-            'title_and_review_text'] = raw_data.product_title + ' ' + raw_data.review_headline + ' ' + raw_data.review_body
+        raw_data['title_and_review_text'] = raw_data.product_title + ' ' + raw_data.review_headline + ' ' + raw_data.review_body
 
         self.__weeks = [
             self.__extract_data(raw_data, '2015-05-04', '2015-05-10'),
             self.__extract_data(raw_data, '2015-05-11', '2015-05-17'),
             self.__extract_data(raw_data, '2015-05-18', '2015-05-24'),
-            self.__extract_data(raw_data, '2015-05-25', '2015-05-31')
+            self.__extract_data(raw_data, '2015-05-25', '2015-05-31'),
+            self.__extract_data(raw_data, '2015-06-01', '2015-06-07'),
+            self.__extract_data(raw_data, '2015-06-08', '2015-06-14'),
+            self.__extract_data(raw_data, '2015-06-15', '2015-06-21'),
+            self.__extract_data(raw_data, '2015-06-22', '2015-06-28')
         ]
 
         self.__labels = [
             self.__extract_labels(raw_data, '2015-05-04', '2015-05-10'),
             self.__extract_labels(raw_data, '2015-05-11', '2015-05-17'),
             self.__extract_labels(raw_data, '2015-05-18', '2015-05-24'),
-            self.__extract_labels(raw_data, '2015-05-25', '2015-05-31')
+            self.__extract_labels(raw_data, '2015-05-25', '2015-05-31'),
+            self.__extract_labels(raw_data, '2015-06-01', '2015-06-07'),
+            self.__extract_labels(raw_data, '2015-06-08', '2015-06-14'),
+            self.__extract_labels(raw_data, '2015-06-15', '2015-06-21'),
+            self.__extract_labels(raw_data, '2015-06-22', '2015-06-28')
         ]
 
         self.__current_week = -1
