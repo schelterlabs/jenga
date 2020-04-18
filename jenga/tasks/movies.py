@@ -57,7 +57,6 @@ class Preprocessing:
 
         encodings = []
 
-        pos = 0
         for genre_str in all_genre_strs:
 
             one_hot_encoded = np.zeros(18)
@@ -67,7 +66,6 @@ class Preprocessing:
                     one_hot_encoded[genres[genre_desc]] = 1.0
 
             encodings.append(one_hot_encoded)
-            pos += 1
 
         return encodings
 
