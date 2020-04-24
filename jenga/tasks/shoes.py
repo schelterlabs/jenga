@@ -2,7 +2,8 @@ import tensorflow as tf
 import numpy as np
 from tensorflow import keras
 
-from sklearn.metrics import accuracy_score
+from jenga.basis import BinaryClassificationTask
+
 from keras.utils import to_categorical
 
 
@@ -11,29 +12,36 @@ class PreprocessingDecorator:
     def __init__(self, model):
         self.model = model
 
-    def predict_classes(self, images):
+    def predict_proba(self, images):
         normalized_images = images.astype('float32') / 255
         reshaped_images = normalized_images.reshape(images.shape[0], 28, 28, 1)
-        return self.model.predict_classes(reshaped_images)
+        return self.model.predict_proba(reshaped_images)
 
 
-class ShoeCategorizationTask:
+class ShoeCategorizationTask(BinaryClassificationTask):
 
     def __init__(self):
+
+        sneaker_id = 7
+        ankle_boot_id = 9
+
         fashion_mnist = keras.datasets.fashion_mnist
-        (all_train_images, all_train_labels), (all_test_images, all_test_labels) = fashion_mnist.load_data()
+        (train_images, all_train_labels), (test_images, all_test_labels) = fashion_mnist.load_data()
 
-        # Sneaker (class=7) vs AnkleBoot (class=9)
-        self.train_images = all_train_images[(all_train_labels == 9) | (all_train_labels == 7)]
+        # AnkleBoot (class=9) vs Sneaker (class=7)
+        train_data = train_images[(all_train_labels == ankle_boot_id) | (all_train_labels == sneaker_id)]
 
-        train_labels = all_train_labels[(all_train_labels == 9) | (all_train_labels == 7)]
-        train_labels = np.where(train_labels == 9, 1, train_labels)
-        self.train_labels = np.where(train_labels == 7, 0, train_labels)
+        train_labels = all_train_labels[(all_train_labels == ankle_boot_id) | (all_train_labels == sneaker_id)]
+        train_labels = np.where(train_labels == ankle_boot_id, 1, train_labels)
+        train_labels = np.where(train_labels == sneaker_id, 0, train_labels)
 
-        self.test_images = all_test_images[(all_test_labels == 9) | (all_test_labels == 7)]
-        test_labels = all_test_labels[(all_test_labels == 9) | (all_test_labels == 7)]
-        test_labels = np.where(test_labels == 9, 1, test_labels)
-        self.__test_labels = np.where(test_labels == 7, 0, test_labels)
+        test_data = test_images[(all_test_labels == ankle_boot_id) | (all_test_labels == sneaker_id)]
+
+        test_labels = all_test_labels[(all_test_labels == ankle_boot_id) | (all_test_labels == sneaker_id)]
+        test_labels = np.where(test_labels == ankle_boot_id, 1, test_labels)
+        test_labels = np.where(test_labels == sneaker_id, 0, test_labels)
+
+        BinaryClassificationTask.__init__(self, train_data, train_labels, test_data, test_labels)
 
     def fit_baseline_model(self, images, labels):
         model = tf.keras.Sequential()
@@ -59,6 +67,3 @@ class ShoeCategorizationTask:
         model.fit(reshaped_images, to_categorical(labels))
 
         return PreprocessingDecorator(model)
-
-    def score_on_test_images(self, predicted_labels):
-        return accuracy_score(self.__test_labels, predicted_labels)

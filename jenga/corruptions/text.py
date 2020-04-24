@@ -3,10 +3,13 @@ import random
 
 class MissingValues:
 
-    def __init__(self, column, fraction, na_value):
+    def __init__(self, column, fraction, na_value=''):
         self.column = column
         self.fraction = fraction
         self.na_value = na_value
+
+    def __repr__(self):
+        return f'MissingValues__{self.column}__{self.fraction}'
 
     def transform(self, data):
         corrupted_data = data.copy(deep=True)

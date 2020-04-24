@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 
-from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import OneHotEncoder, label_binarize, StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import SGDClassifier
@@ -9,8 +8,10 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.pipeline import Pipeline
 
+from jenga.basis import BinaryClassificationTask
 
-class VideogameReviewsTask:
+
+class VideogameReviewsTask(BinaryClassificationTask):
 
     def __init__(self):
         columns = ['marketplace', 'customer_id', 'review_id', 'product_id', 'product_parent',
@@ -24,89 +25,28 @@ class VideogameReviewsTask:
 
         raw_data[['product_title', 'review_headline', 'review_body']] = raw_data[
             ['product_title', 'review_headline', 'review_body']].fillna(value='')
-        raw_data['title_and_review_text'] = raw_data.product_title + ' ' + raw_data.review_headline + ' ' + raw_data.review_body
+        raw_data['title_and_review_text'] = raw_data.product_title + ' ' + raw_data.review_headline + \
+            ' ' + raw_data.review_body
 
-        self.__weeks = [
-            self.__extract_data(raw_data, '2015-05-04', '2015-05-10'),
-            self.__extract_data(raw_data, '2015-05-11', '2015-05-17'),
-            self.__extract_data(raw_data, '2015-05-18', '2015-05-24'),
-            self.__extract_data(raw_data, '2015-05-25', '2015-05-31'),
-            self.__extract_data(raw_data, '2015-06-01', '2015-06-07'),
-            self.__extract_data(raw_data, '2015-06-08', '2015-06-14'),
-            self.__extract_data(raw_data, '2015-06-15', '2015-06-21'),
-            self.__extract_data(raw_data, '2015-06-22', '2015-06-28')
-        ]
+        train_data = self.__extract_data(raw_data, '2015-05-04', '2015-06-14')
+        test_data = self.__extract_data(raw_data, '2015-06-15', '2015-06-28')
+        train_labels = self.__extract_labels(raw_data, '2015-05-04', '2015-06-14')
+        test_labels = self.__extract_labels(raw_data, '2015-06-15', '2015-06-28')
 
-        self.__labels = [
-            self.__extract_labels(raw_data, '2015-05-04', '2015-05-10'),
-            self.__extract_labels(raw_data, '2015-05-11', '2015-05-17'),
-            self.__extract_labels(raw_data, '2015-05-18', '2015-05-24'),
-            self.__extract_labels(raw_data, '2015-05-25', '2015-05-31'),
-            self.__extract_labels(raw_data, '2015-06-01', '2015-06-07'),
-            self.__extract_labels(raw_data, '2015-06-08', '2015-06-14'),
-            self.__extract_labels(raw_data, '2015-06-15', '2015-06-21'),
-            self.__extract_labels(raw_data, '2015-06-22', '2015-06-28')
-        ]
+        BinaryClassificationTask.__init__(self, train_data, train_labels, test_data, test_labels)
 
-        self.__current_week = -1
-
-    def __extract_data(self, raw_data, start_date, end_date):
+    @staticmethod
+    def __extract_data(raw_data, start_date, end_date):
         data_slice = raw_data[(raw_data.review_date >= start_date) & (raw_data.review_date <= end_date)].copy(deep=True)
         data_slice = data_slice.drop(['helpful_votes'], axis=1)
         return data_slice
 
-    def __extract_labels(self, raw_data, start_date, end_date):
+    @staticmethod
+    def __extract_labels(raw_data, start_date, end_date):
         data_slice = raw_data[(raw_data.review_date >= start_date) & (raw_data.review_date <= end_date)].copy(deep=True)
         labels = np.ravel(label_binarize(data_slice.helpful_votes > 0, [True, False]))
 
         return labels
-
-    def current_week(self):
-        return self.__current_week
-
-    def advance_current_week(self):
-        if self.__current_week < len(self.__weeks) - 2:
-            self.__current_week += 1
-            return True
-        else:
-            return False
-
-    def current_accumulated_train_data(self):
-
-        train_data = None
-
-        for index in range(0, self.__current_week + 1):
-            if train_data is None:
-                train_data = self.__weeks[index].copy(deep=True)
-            else:
-                train_data = train_data.append(self.__weeks[index].copy(deep=True))
-
-        return train_data
-
-    def current_new_train_data(self):
-        return self.__weeks[self.__current_week].copy(deep=True)
-
-    def current_new_train_labels(self):
-        return np.copy(self.__labels[self.__current_week])
-
-    def current_accumulated_train_labels(self):
-
-        train_labels = None
-
-        for index in range(0, self.__current_week + 1):
-            if train_labels is None:
-                train_labels = np.copy(self.__labels[index])
-            else:
-                train_labels = np.concatenate((train_labels, np.copy(self.__labels[index])), axis=None)
-
-        return train_labels
-
-    def current_test_data(self):
-        return self.__weeks[self.__current_week + 1].copy(deep=True)
-
-    def score_on_current_test_data(self, predicted_label_probabilities):
-        true_labels = self.__labels[self.__current_week + 1]
-        return roc_auc_score(true_labels, np.transpose(predicted_label_probabilities)[1])
 
     def fit_baseline_model(self, train_data, train_labels):
 
