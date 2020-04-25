@@ -23,16 +23,23 @@ class IncomeEstimationTask(BinaryClassificationTask):
 
         train_data = train_split[columns]
         train_labels = np.array(train_split['class'] == '>50K')
+        train_data = train_data.drop(['class'], axis=1)
 
         test_data = test_split[columns]
         test_labels = np.array(test_split['class'] == '>50K')
+        test_data = test_data.drop(['class'], axis=1)
 
-        BinaryClassificationTask.__init__(self, train_data, train_labels, test_data, test_labels)
+        BinaryClassificationTask.__init__(self,
+                                          train_data,
+                                          train_labels,
+                                          test_data,
+                                          test_labels,
+                                          categorical_columns=['workclass', 'occupation', 'marital_status',
+                                                               'education'],
+                                          numerical_columns=['hours_per_week', 'age']
+                                          )
 
     def fit_baseline_model(self, train_data, train_labels):
-
-        numerical_attributes = ['hours_per_week', 'age']
-        categorical_attributes = ['workclass', 'occupation', 'marital_status', 'education']
 
         mark_missing_and_encode = Pipeline([
             ('mark_missing', SimpleImputer(strategy='constant', fill_value='__NA__')),
@@ -40,8 +47,8 @@ class IncomeEstimationTask(BinaryClassificationTask):
         ])
 
         feature_transformation = ColumnTransformer(transformers=[
-            ('categorical_features', mark_missing_and_encode, categorical_attributes),
-            ('scaled_numeric', StandardScaler(), numerical_attributes)
+            ('categorical_features', mark_missing_and_encode, self.categorical_columns),
+            ('scaled_numeric', StandardScaler(), self.numerical_columns)
         ])
 
         param_grid = {

@@ -33,7 +33,18 @@ class VideogameReviewsTask(BinaryClassificationTask):
         train_labels = self.__extract_labels(raw_data, '2015-05-04', '2015-06-14')
         test_labels = self.__extract_labels(raw_data, '2015-06-15', '2015-06-28')
 
-        BinaryClassificationTask.__init__(self, train_data, train_labels, test_data, test_labels)
+        BinaryClassificationTask.__init__(self,
+                                          train_data,
+                                          train_labels,
+                                          test_data,
+                                          test_labels,
+                                          categorical_columns=['marketplace', 'customer_id', 'review_id',
+                                                               'product_id', 'product_parent', 'vine',
+                                                               'verified_purchase'],
+                                          numerical_columns=['star_rating'],
+                                          text_columns=['product_title', 'review_headline', 'review_body',
+                                                        'title_and_review_text']
+                                          )
 
     @staticmethod
     def __extract_data(raw_data, start_date, end_date):
