@@ -23,11 +23,9 @@ class IncomeEstimationTask(BinaryClassificationTask):
 
         train_data = train_split[columns]
         train_labels = np.array(train_split['class'] == '>50K')
-        train_data = train_data.drop(['class'], axis=1)
 
         test_data = test_split[columns]
         test_labels = np.array(test_split['class'] == '>50K')
-        test_data = test_data.drop(['class'], axis=1)
 
         BinaryClassificationTask.__init__(self,
                                           train_data,

@@ -20,7 +20,6 @@ class BinaryClassificationTask(ABC):
         self.train_labels = train_labels
         self.test_data = test_data
         self.__test_labels = test_labels
-        self.label_column = label_column,
         self.categorical_columns = categorical_columns,
         self.numerical_columns = numerical_columns,
         self.text_columns = text_columns,
@@ -32,3 +31,13 @@ class BinaryClassificationTask(ABC):
 
     def score_on_test_data(self, predicted_label_probabilities):
         return roc_auc_score(self.__test_labels, np.transpose(predicted_label_probabilities)[1])
+
+
+class DataCorruption:
+
+    @abstractmethod
+    def transform(self, data):
+        pass
+
+    def __str__(self):
+        return f"{self.__class__.__name__}: {self.__dict__}"

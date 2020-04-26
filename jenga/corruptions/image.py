@@ -2,15 +2,18 @@ import numpy as np
 import random
 import cv2
 
+from jenga.basis import DataCorruption
 
-class GaussianNoise:
+
+class GaussianNoise(DataCorruption):
 
     def __init__(self, fraction, sigma=25):
         self.fraction = fraction
         self.sigma = sigma
+        DataCorruption.__init__(self)
 
-    def transform(self, images):
-        noisy_images = images.copy()
+    def transform(self, data):
+        noisy_images = data.copy()
 
         for index in range(0, len(noisy_images)):
             if random.random() < self.fraction:
