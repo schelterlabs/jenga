@@ -1,10 +1,10 @@
 from jenga.tasks.income import IncomeEstimationTask
-from jenga.corruptions.text import MissingValues
+from jenga.corruptions.generic import MissingValues
 from jenga.evaluation.schema_validation import SchemaValidationEvaluator
 
 import tensorflow_data_validation as tfdv
 
-task = IncomeEstimationTask()
+task = IncomeEstimationTask(seed=42)
 
 evaluator = SchemaValidationEvaluator(task)
 
@@ -16,7 +16,7 @@ education_feature.distribution_constraints.min_domain_mass = 0.98
 
 model = task.fit_baseline_model(task.train_data, task.train_labels)
 
-many_missing_values = MissingValues('education', fraction=0.99, na_value='MISSING')
+many_missing_values = MissingValues('education', fraction=0.99, na_value='')
 result = evaluator.evaluate_validation(model, schema, many_missing_values)[0]
 
 print(f"""

@@ -13,7 +13,7 @@ from jenga.basis import BinaryClassificationTask
 
 class VideogameReviewsTask(BinaryClassificationTask):
 
-    def __init__(self):
+    def __init__(self, seed):
         columns = ['marketplace', 'customer_id', 'review_id', 'product_id', 'product_parent',
                    'product_title', 'product_category', 'star_rating', 'helpful_votes',
                    'total_votes', 'vine', 'verified_purchase', 'review_headline', 'review_body',
@@ -34,6 +34,7 @@ class VideogameReviewsTask(BinaryClassificationTask):
         test_labels = self.__extract_labels(raw_data, '2015-06-15', '2015-06-28')
 
         BinaryClassificationTask.__init__(self,
+                                          seed,
                                           train_data,
                                           train_labels,
                                           test_data,

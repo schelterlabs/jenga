@@ -20,7 +20,7 @@ class PreprocessingDecorator:
 
 class ShoeCategorizationTask(BinaryClassificationTask):
 
-    def __init__(self):
+    def __init__(self, seed):
 
         sneaker_id = 7
         ankle_boot_id = 9
@@ -41,7 +41,8 @@ class ShoeCategorizationTask(BinaryClassificationTask):
         test_labels = np.where(test_labels == ankle_boot_id, 1, test_labels)
         test_labels = np.where(test_labels == sneaker_id, 0, test_labels)
 
-        BinaryClassificationTask.__init__(self, train_data, train_labels, test_data, test_labels, is_image_data=True)
+        BinaryClassificationTask.__init__(self, seed,  train_data, train_labels, test_data, test_labels,
+                                          is_image_data=True)
 
     def fit_baseline_model(self, images, labels):
         model = tf.keras.Sequential()

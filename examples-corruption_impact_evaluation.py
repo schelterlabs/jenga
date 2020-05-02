@@ -1,19 +1,19 @@
 from jenga.tasks.income import IncomeEstimationTask
-from jenga.corruptions.text import MissingValues
+from jenga.corruptions.generic import MissingValues
 from jenga.evaluation.corruption_impact import CorruptionImpactEvaluator
 
-task = IncomeEstimationTask()
+task = IncomeEstimationTask(seed=42)
 
 evaluator = CorruptionImpactEvaluator(task)
 
 model = task.fit_baseline_model(task.train_data, task.train_labels)
 
 corruptions = [
-    MissingValues('education', fraction=0.99),
-    MissingValues('education', fraction=0.5),
-    MissingValues('education', fraction=0.01),
-    MissingValues('workclass', fraction=0.99),
-    MissingValues('workclass', fraction=0.01)
+    MissingValues('education', fraction=0.99, na_value=''),
+    MissingValues('education', fraction=0.5, na_value=''),
+    MissingValues('education', fraction=0.01, na_value=''),
+    MissingValues('workclass', fraction=0.99, na_value=''),
+    MissingValues('workclass', fraction=0.01, na_value='')
 ]
 
 results = evaluator.evaluate(model, *corruptions)

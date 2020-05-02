@@ -14,12 +14,12 @@ from jenga.basis import BinaryClassificationTask
 
 class IncomeEstimationTask(BinaryClassificationTask):
 
-    def __init__(self):
+    def __init__(self, seed):
 
         columns = ['workclass', 'occupation', 'marital_status', 'education', 'hours_per_week', 'age']
         all_data = pd.read_csv('data/income/adult.csv', na_values='?')
 
-        train_split, test_split = train_test_split(all_data, test_size=0.2)
+        train_split, test_split = train_test_split(all_data, test_size=0.2, seed=seed)
 
         train_data = train_split[columns]
         train_labels = np.array(train_split['class'] == '>50K')
@@ -28,6 +28,7 @@ class IncomeEstimationTask(BinaryClassificationTask):
         test_labels = np.array(test_split['class'] == '>50K')
 
         BinaryClassificationTask.__init__(self,
+                                          seed,
                                           train_data,
                                           train_labels,
                                           test_data,

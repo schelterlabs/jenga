@@ -4,32 +4,6 @@ import numpy as np
 from jenga.basis import DataCorruption
 
 
-class SwappedValues(DataCorruption):
-
-    def __init__(self, column_a, column_b, fraction):
-        self.column_a = column_a
-        self.column_b = column_b
-        self.fraction = fraction
-        DataCorruption.__init__(self)
-
-    def transform(self, clean_df):
-        df = clean_df.copy(deep=True)
-
-        values_of_column_a = list(df[self.column_a])
-        values_of_column_b = list(df[self.column_b])
-
-        for index in range(0, len(values_of_column_a)):
-            if random.random() < self.fraction:
-                temp_value = values_of_column_a[index]
-                values_of_column_a[index] = values_of_column_b[index]
-                values_of_column_b[index] = temp_value
-
-        df[self.column_a] = values_of_column_a
-        df[self.column_b] = values_of_column_b
-
-        return df
-
-
 class GaussianNoise(DataCorruption):
 
     def __init__(self, column, fraction):
