@@ -16,10 +16,17 @@ class CorruptionImpactEvaluator:
 
     def evaluate(self, model, num_repetitions, *corruptions):
 
-        baseline_predictions = model.predict_proba(self.__task.test_data)
+        test_data_copy = self.__task.test_data.copy(deep=True)
+        baseline_predictions = model.predict_proba(test_data_copy)
         baseline_score = self.__task.score_on_test_data(baseline_predictions)
 
         results = []
+
+        num_results = len(corruptions) * num_repetitions
+
+        current_run = 0
+        import time
+        t = time.process_time()
 
         for corruption in corruptions:
             corrupted_scores = []
@@ -31,6 +38,10 @@ class CorruptionImpactEvaluator:
                 corrupted_score = self.__task.score_on_test_data(corrupted_predictions)
 
                 corrupted_scores.append(corrupted_score)
+
+                if current_run % 10 == 0:
+                    print(f"{current_run}/{num_results} ({time.process_time() - t})")
+                current_run += 1
 
             results.append(ValidationResult(corruption, baseline_score, corrupted_scores))
 
