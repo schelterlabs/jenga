@@ -18,7 +18,7 @@ class MissingValues(DataCorruption):
         # TODO check if missingness is valid
 
         if self.missingness == 'MCAR':
-            missing_indices = np.random.rand(len(data)) > self.fraction
+            missing_indices = np.random.rand(len(data)) < self.fraction
         else:
             n_values_to_discard = int(len(data) * min(self.fraction, 1.0))
             perc_lower_start = np.random.randint(0, len(data) - n_values_to_discard)
