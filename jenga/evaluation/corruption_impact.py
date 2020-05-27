@@ -16,7 +16,11 @@ class CorruptionImpactEvaluator:
 
     def evaluate(self, model, num_repetitions, *corruptions):
 
-        test_data_copy = self.__task.test_data.copy(deep=True)
+        if not self.__task.is_image_data:
+            test_data_copy = self.__task.test_data.copy(deep=True)
+        else:
+            test_data_copy = self.__task.test_data.copy()
+
         baseline_predictions = model.predict_proba(test_data_copy)
         baseline_score = self.__task.score_on_test_data(baseline_predictions)
 
@@ -31,7 +35,12 @@ class CorruptionImpactEvaluator:
         for corruption in corruptions:
             corrupted_scores = []
             for _ in range(0, num_repetitions):
-                test_data_copy = self.__task.test_data.copy(deep=True)
+
+                if not self.__task.is_image_data:
+                    test_data_copy = self.__task.test_data.copy(deep=True)
+                else:
+                    test_data_copy = self.__task.test_data.copy()
+
                 corrupted_data = corruption.transform(test_data_copy)
 
                 corrupted_predictions = model.predict_proba(corrupted_data)

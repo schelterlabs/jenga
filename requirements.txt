@@ -8,3 +8,6 @@ jupyter==1.0.0
 tensorflow==1.13.1
 tensorflow-data-validation==0.13.0
 matplotlib
+imgaug
+imagecorruptions
+
