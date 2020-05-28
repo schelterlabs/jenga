@@ -27,79 +27,121 @@ class SchemaStresstest:
         random_corruptions = set()
 
         for _ in range(0, num_corruptions):
+            num_columns = len(task.numerical_columns + task.categorical_columns + task.text_columns)
+            p_numerical_column_affected = float(len(task.numerical_columns)) / num_columns
+            p_categorical_column_affected = float(len(task.categorical_columns)) / num_columns
+            p_text_column_affected = float(len(task.text_columns)) / num_columns
+
+            affected_column_type = np.random.choice(['numerical', 'categorical', 'text'], 1,
+                                                    p=[p_numerical_column_affected, p_categorical_column_affected,
+                                                       p_text_column_affected])
+
             fraction = float(np.random.randint(100)) / 100
-            corruption_type = np.random.choice(['missing', 'swapped', 'noise', 'scaling', 'encoding'])
 
-            if corruption_type == 'missing':
-                missingness = np.random.choice(['MCAR', 'MAR', 'MNAR'])
-                if np.random.uniform() < 0.5:
-                    affected_column = np.random.choice(task.categorical_columns + task.text_columns)
-                    random_corruptions.add(MissingValues(affected_column, fraction,
-                                                         na_value='', missingness=missingness))
+            if affected_column_type == 'numerical':
+
+                if len(task.numerical_columns) >= 2 and np.random.uniform() < 0.1:
+                    affected_columns = np.random.choice(task.numerical_columns, 2)
+                    random_corruptions.add(SwappedValues(affected_columns[0], affected_columns[1], fraction))
                 else:
-                    affected_column = np.random.choice(task.numerical_columns)
-                    random_corruptions.add(MissingValues(affected_column, fraction,
-                                                         na_value=np.nan, missingness=missingness))
-            elif corruption_type == 'swapped':
-                affected_columns = np.random.choice(task.categorical_columns + task.text_columns, 2)
-                random_corruptions.add(SwappedValues(affected_columns[0], affected_columns[1], fraction))
-            elif corruption_type == 'noise':
-                affected_column = np.random.choice(task.numerical_columns)
-                random_corruptions.add(GaussianNoise(affected_column, fraction))
-            elif corruption_type == 'scaling':
-                affected_column = np.random.choice(task.numerical_columns)
-                random_corruptions.add(Scaling(affected_column, fraction))
-            elif corruption_type == 'encoding':
-                affected_column = np.random.choice(task.categorical_columns + task.text_columns)
-                random_corruptions.add(BrokenCharacters(affected_column, fraction))
 
-            outcome = {
-                'corruption': [],
-                'status': [],
-                'anomalies': [],
-                'baseline_score': [],
-                'corrupted_score': []
-            }
+                    corruption_type = np.random.choice(['missing', 'noise', 'scaling'])
 
-            for corruption in random_corruptions:
-                print(corruption)
-                test_data_copy = task.test_data.copy(deep=True)
-                corrupted_data = corruption.transform(test_data_copy)
+                    if corruption_type == 'missing':
+                        missingness = np.random.choice(['MCAR', 'MAR', 'MNAR'])
+                        affected_column = np.random.choice(task.numerical_columns)
+                        random_corruptions.add(MissingValues(affected_column, fraction, na_value=np.nan,
+                                                             missingness=missingness))
+                    elif corruption_type == 'noise':
+                        affected_column = np.random.choice(task.numerical_columns)
+                        random_corruptions.add(GaussianNoise(affected_column, fraction))
+                    elif corruption_type == 'scaling':
+                        affected_column = np.random.choice(task.numerical_columns)
+                        random_corruptions.add(Scaling(affected_column, fraction))
 
-                corrupted_data_stats = tfdv.generate_statistics_from_dataframe(corrupted_data)
-                tfdv_anomalies = tfdv.validate_statistics(statistics=corrupted_data_stats, schema=schema)
+            elif affected_column_type == 'categorical':
 
-                schema_anomalies = tfdv_anomalies.anomaly_info
-
-                try:
-                    corrupted_predictions = model.predict_proba(corrupted_data)
-                    corrupted_score = task.score_on_test_data(corrupted_predictions)
-
-                    performance_drop = (baseline_score - corrupted_score) / baseline_score
-
-                    has_negative_impact = performance_drop > performance_threshold
-                except:
-                    corrupted_score = None
-                    has_negative_impact = True
-
-                has_anomalies = len(tfdv_anomalies.anomaly_info) != 0
-
-                if has_anomalies:
-                    if has_negative_impact:
-                        status = 'TP'
-                    else:
-                        status = 'FP'
+                if len(task.categorical_columns) >= 2 and np.random.uniform() < 0.1:
+                    affected_columns = np.random.choice(task.categorical_columns, 2)
+                    random_corruptions.add(SwappedValues(affected_columns[0], affected_columns[1], fraction))
                 else:
-                    if not has_negative_impact:
-                        status = 'TN'
-                    else:
-                        status = 'FN'
+                    corruption_type = np.random.choice(['missing', 'encoding'])
 
-                outcome['corruption'].append(str(corruption))
-                outcome['status'].append(status)
-                outcome['anomalies'].append(str(schema_anomalies))
-                outcome['baseline_score'].append(baseline_score)
-                outcome['corrupted_score'].append(corrupted_score)
+                    if corruption_type == 'missing':
+                        missingness = np.random.choice(['MCAR', 'MAR', 'MNAR'])
+                        affected_column = np.random.choice(task.categorical_columns)
+                        random_corruptions.add(MissingValues(affected_column, fraction, na_value='',
+                                                             missingness=missingness))
 
-            return pd.DataFrame.from_dict(outcome)
+                    elif corruption_type == 'encoding':
+                        affected_column = np.random.choice(task.categorical_columns)
+                        random_corruptions.add(BrokenCharacters(affected_column, fraction))
+
+            elif affected_column_type == 'text':
+
+                if len(task.text_columns) >= 2 and np.random.uniform() < 0.1:
+                    affected_columns = np.random.choice(task.text_columns, 2)
+                    random_corruptions.add(SwappedValues(affected_columns[0], affected_columns[1], fraction))
+                else:
+                    corruption_type = np.random.choice(['missing', 'encoding'])
+
+                    if corruption_type == 'missing':
+                        missingness = np.random.choice(['MCAR', 'MAR', 'MNAR'])
+                        affected_column = np.random.choice(task.text_columns)
+                        random_corruptions.add(MissingValues(affected_column, fraction, na_value='',
+                                                             missingness=missingness))
+
+                    elif corruption_type == 'encoding':
+                        affected_column = np.random.choice(task.text_columns)
+                        random_corruptions.add(BrokenCharacters(affected_column, fraction))
+
+        outcome = {
+            'corruption': [],
+            'status': [],
+            'anomalies': [],
+            'baseline_score': [],
+            'corrupted_score': []
+        }
+
+        for corruption in random_corruptions:
+            print(corruption)
+            test_data_copy = task.test_data.copy(deep=True)
+            corrupted_data = corruption.transform(test_data_copy)
+
+            corrupted_data_stats = tfdv.generate_statistics_from_dataframe(corrupted_data)
+            tfdv_anomalies = tfdv.validate_statistics(statistics=corrupted_data_stats, schema=schema)
+
+            schema_anomalies = tfdv_anomalies.anomaly_info
+
+            try:
+                corrupted_predictions = model.predict_proba(corrupted_data)
+                corrupted_score = task.score_on_test_data(corrupted_predictions)
+
+                performance_drop = (baseline_score - corrupted_score) / baseline_score
+
+                has_negative_impact = performance_drop > performance_threshold
+            except:
+                corrupted_score = None
+                has_negative_impact = True
+
+            has_anomalies = len(tfdv_anomalies.anomaly_info) != 0
+
+            if has_anomalies:
+                if has_negative_impact:
+                    status = 'TP'
+                else:
+                    status = 'FP'
+            else:
+                if not has_negative_impact:
+                    status = 'TN'
+                else:
+                    status = 'FN'
+
+            outcome['corruption'].append(str(corruption))
+            outcome['status'].append(status)
+            outcome['anomalies'].append(str(schema_anomalies))
+            outcome['baseline_score'].append(baseline_score)
+            outcome['corrupted_score'].append(corrupted_score)
+
+        return pd.DataFrame.from_dict(outcome)
 
