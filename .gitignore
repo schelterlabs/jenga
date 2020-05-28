@@ -7,5 +7,4 @@ play.py
 imputer_model*
 *.jsonpickle
 *.pkl
-*.ipynb
 random_validation_*.csv
