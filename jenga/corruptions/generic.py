@@ -39,7 +39,7 @@ class MissingValues(DataCorruption):
         return corrupted_data
 
 
-# Missing Values based on the records "difficulty" for the model
+# Missing Values based on the records' "difficulty" for the model
 class MissingValuesBasedOnEntropy(DataCorruption):
 
     def __init__(self,

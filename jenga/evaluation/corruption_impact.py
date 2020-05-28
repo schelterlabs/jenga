@@ -5,10 +5,10 @@ class ValidationResult:
         self.baseline_score = baseline_score
         self.corrupted_scores = corrupted_scores
 
-        self.performance_drops_in_percent = [((baseline_score - corrupted_score) / baseline_score) * 100
-                                             for corrupted_score in corrupted_scores]
 
-
+# Evaluate the impact of one or more data corruption on the prediction quality of a model;
+# applies the corruptions repeatedly to copies of the test data
+# and computes the model's prediction quality for afterwards
 class CorruptionImpactEvaluator:
 
     def __init__(self, task):
@@ -32,8 +32,10 @@ class CorruptionImpactEvaluator:
         import time
         t = time.process_time()
 
+        # Evaluate each specified corruption
         for corruption in corruptions:
             corrupted_scores = []
+            # Repeatedly
             for _ in range(0, num_repetitions):
 
                 if not self.__task.is_image_data:

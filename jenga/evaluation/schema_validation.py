@@ -10,11 +10,15 @@ class SchemaValidationResult:
         self.corrupted_scores = corrupted_scores
 
 
+# Takes a tfdv schema and corruptions to evaluate two things at once:
+# (1) Does tfdv detect an anomaly for the corruption?
+# (2) How much does the corruption decrease the prediction quality
 class SchemaValidationEvaluator:
 
     def __init__(self, task):
         self.__task = task
 
+    # Auto-infer a schema from the training daya
     def schema_from_train_data(self):
         train_data_stats = tfdv.generate_statistics_from_dataframe(self.__task.train_data)
         schema = tfdv.infer_schema(statistics=train_data_stats)
@@ -27,6 +31,7 @@ class SchemaValidationEvaluator:
 
         results = []
 
+        # Repeatedly corrupt the test data
         for corruption in corruptions:
             corrupted_scores = []
             anomalies = []
@@ -34,11 +39,13 @@ class SchemaValidationEvaluator:
                 test_data_copy = self.__task.test_data.copy(deep=True)
                 corrupted_data = corruption.transform(test_data_copy)
 
+                # Determine whether tfdv finds anomalies in the data
                 corrupted_data_stats = tfdv.generate_statistics_from_dataframe(corrupted_data)
                 tfdv_anomalies = tfdv.validate_statistics(statistics=corrupted_data_stats, schema=schema)
 
                 schema_anomalies = tfdv_anomalies.anomaly_info
 
+                # Compute the prediction score on the test data
                 corrupted_predictions = model.predict_proba(corrupted_data)
                 corrupted_score = self.__task.score_on_test_data(corrupted_predictions)
 

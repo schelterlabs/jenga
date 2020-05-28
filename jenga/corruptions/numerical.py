@@ -4,6 +4,7 @@ import numpy as np
 from jenga.basis import DataCorruption
 
 
+# Add gaussian noise to an attribute, mimics noisy, unreliable measurements
 class GaussianNoise(DataCorruption):
 
     def __init__(self, column, fraction):
@@ -27,6 +28,8 @@ class GaussianNoise(DataCorruption):
         return df
 
 
+# Randomly scale a fraction of the values (mimics case where someone actually changes the scale
+# of some attribute, e.g., recording a duration in milliseconds instead of seconds)
 class Scaling(DataCorruption):
 
     def __init__(self, column, fraction):

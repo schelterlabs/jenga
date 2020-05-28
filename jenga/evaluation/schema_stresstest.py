@@ -8,6 +8,10 @@ from jenga.corruptions.text import BrokenCharacters
 import tensorflow_data_validation as tfdv
 
 
+# Takes a tfdv schema and corruptions to evaluate two things at once:
+# (1) Does tfdv detect an anomaly for the corruption?
+# (2) How much does the corruption decrease the prediction quality
+# This class randomly generates data corruptions though for a given task
 class SchemaStresstest:
 
     def validate(self, schema, data):

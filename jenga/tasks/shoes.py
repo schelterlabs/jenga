@@ -18,6 +18,7 @@ class PreprocessingDecorator:
         return self.model.predict_proba(reshaped_images)
 
 
+# Distinguish images of "ankle boots" from images of "sneakers"
 class ShoeCategorizationTask(BinaryClassificationTask):
 
     def __init__(self, seed):

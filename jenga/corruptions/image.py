@@ -5,6 +5,8 @@ import numpy as np
 import random
 
 
+# Base class for image corruptions, for which we rely on the augmentor library
+# https://github.com/mdbloice/Augmentor
 class ImageCorruption(DataCorruption):
 
     def __init__(self, fraction, corruptions):
@@ -20,13 +22,18 @@ class ImageCorruption(DataCorruption):
         for index in range(0, len(corrupted_images)):
             if random.random() < self.fraction:
                 img = corrupted_images[index]
-                # superslow hack for too small images...
-                wrapper = np.zeros((32, 32), dtype=img.dtype)
-                wrapper[2:30, 2:30] = img
 
-                corr = seq(images=wrapper)
+                # ugly, superslow hack for too small images from mnist and fashion mnist...
+                # we need to have at least 32x32 pixel images for the corruptions to work...
+                if img.shape[0] == 28:
+                    wrapper = np.zeros((32, 32), dtype=img.dtype)
+                    wrapper[2:30, 2:30] = img
 
-                corrupted_images[index] = corr[2:30, 2:30]
+                    corr = seq(images=wrapper)
+
+                    corrupted_images[index] = corr[2:30, 2:30]
+                else:
+                    seq(images=corrupted_images[index])
 
         return corrupted_images
 

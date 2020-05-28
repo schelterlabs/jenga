@@ -3,6 +3,8 @@ import random
 from jenga.basis import DataCorruption
 
 
+# Mimics cases where text is processed with the wrong encoding
+# (e.g., when crawled from the web)
 class BrokenCharacters(DataCorruption):
 
     def __init__(self, column, fraction):

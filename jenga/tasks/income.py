@@ -12,6 +12,7 @@ from sklearn.impute import SimpleImputer
 from jenga.basis import BinaryClassificationTask
 
 
+# Predict whether a person has high or low income based on demographic and financial attributes
 class IncomeEstimationTask(BinaryClassificationTask):
 
     def __init__(self, seed, ignore_incomplete_records_for_training=False):

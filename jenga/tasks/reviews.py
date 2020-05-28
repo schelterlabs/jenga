@@ -11,6 +11,7 @@ from sklearn.pipeline import Pipeline
 from jenga.basis import BinaryClassificationTask
 
 
+# Predict whether a video game review is considered helpful or not
 class VideogameReviewsTask(BinaryClassificationTask):
 
     def __init__(self, seed):
