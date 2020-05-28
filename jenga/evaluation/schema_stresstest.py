@@ -17,7 +17,7 @@ class SchemaStresstest:
     def has_anomaly(self, validation_result):
         return len(validation_result.anomaly_info) != 0
 
-    def run(self, task, model, schema, threshold, num_repetitions):
+    def run(self, task, model, schema, num_corruptions, performance_threshold):
         # Make sure the schema works on the clean test data
         assert(not self.has_anomaly(self.validate(schema, task.test_data)))
 
@@ -26,7 +26,7 @@ class SchemaStresstest:
 
         random_corruptions = set()
 
-        for _ in range(0, num_repetitions):
+        for _ in range(0, num_corruptions):
             fraction = float(np.random.randint(100)) / 100
             corruption_type = np.random.choice(['missing', 'swapped', 'noise', 'scaling', 'encoding'])
 
@@ -77,7 +77,7 @@ class SchemaStresstest:
 
                     performance_drop = (baseline_score - corrupted_score) / baseline_score
 
-                    has_negative_impact = performance_drop > threshold
+                    has_negative_impact = performance_drop > performance_threshold
                 except:
                     corrupted_score = None
                     has_negative_impact = True
