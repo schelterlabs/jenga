@@ -3,6 +3,7 @@ import random
 from jenga.basis import DataCorruption
 
 
+# Inject different kinds of missing values
 class MissingValues(DataCorruption):
 
     def __init__(self, column, fraction, na_value, missingness='MCAR'):
@@ -15,8 +16,7 @@ class MissingValues(DataCorruption):
     def transform(self, data):
         corrupted_data = data.copy(deep=True)
 
-        # TODO check if missingness is valid
-
+        # Missing Completely At Random
         if self.missingness == 'MCAR':
             missing_indices = np.random.rand(len(data)) < self.fraction
         else:
@@ -24,12 +24,14 @@ class MissingValues(DataCorruption):
             perc_lower_start = np.random.randint(0, len(data) - n_values_to_discard)
             perc_idx = range(perc_lower_start, perc_lower_start + n_values_to_discard)
 
+            # Missing At Random
             if self.missingness == 'MAR':
                 depends_on_col = np.random.choice(list(set(data.columns) - {self.column}))
                 # pick a random percentile of values in other column
                 missing_indices = corrupted_data[depends_on_col].sort_values().iloc[perc_idx].index
+
+            # Missing Not At Random
             else:
-                # self.missingness == 'MNAR':
                 # pick a random percentile of values in this column
                 missing_indices = corrupted_data[self.column].sort_values().iloc[perc_idx].index
 
@@ -37,6 +39,7 @@ class MissingValues(DataCorruption):
         return corrupted_data
 
 
+# Missing Values based on the records "difficulty" for the model
 class MissingValuesBasedOnEntropy(DataCorruption):
 
     def __init__(self,
@@ -72,6 +75,8 @@ class MissingValuesBasedOnEntropy(DataCorruption):
         return df
 
 
+# Swapping a fraction of the values between two columns, mimics input errors in forms
+# and programming errors during data preparation
 class SwappedValues(DataCorruption):
 
     def __init__(self, column_a, column_b, fraction):
