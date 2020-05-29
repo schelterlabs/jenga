@@ -38,7 +38,7 @@ class VideogameReviewsTask(BinaryClassificationTask):
         }
 
         raw_data = pd.read_csv('data/reviews/videogames.tsv', sep='\t', names=columns, dtype=dtypes)
-        # We drop this column, otherwhise the prediction task is to easy
+        # We drop this column, the prediction task is to easy otherwise
         raw_data = raw_data.drop(['total_votes'], axis=1)
 
         raw_data[['product_title', 'review_headline', 'review_body']] = raw_data[
