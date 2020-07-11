@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from autogluon import TabularPrediction as task
 
 class Cleaner:
     def __init__(self,
-                train_df: pd.DataFrame,
                 numeric_columns=None,
                 categorical_columns=None,
                 text_columns=None,
@@ -24,6 +24,7 @@ class Cleaner:
         for col in df.columns:
             if pd.api.types.is_categorical_dtype(df[col]):
                 df[col] = df[col].astype(str)
+        return df
 
     def fit(self, df, columns=None):
         pass
@@ -53,14 +54,14 @@ class AutoGluonCleaner(Cleaner):
                                                 label=col, 
                                                 problem_type='multiclass', 
                                                 verbosity=0)
-            y_test = test_df[col].dropna(subset=[col])
-            y_pred = self.predictors[col].predict(test_df.drop(col,axis=1).dropna(subset=[col]))
+            y_test = test_df[col].dropna()
+            y_pred = self.predictors[col].predict(test_df.dropna(subset=[col]).drop([col],axis=1))
             perf = self.predictors[col].evaluate_predictions(y_true=y_test, y_pred=y_pred, auxiliary_metrics=True)
             not_interesting = ['accuracy', 'macro avg', 'weighted avg']
-            labels = [k for k in perf['<lambda>'].keys() if k not in not_interesting]
+            labels = [k for k in perf['classification_report'].keys() if k not in not_interesting]
             high_precision_labels = []
             for label in labels:
-                if perf['<lambda>'][label]['precision'] > self.categorical_precision_threshold:
+                if perf['classification_report'][label]['precision'] > self.categorical_precision_threshold:
                     high_precision_labels += label
             if high_precision_labels:
                 self.predictable_columns += col
@@ -71,12 +72,12 @@ class AutoGluonCleaner(Cleaner):
                                             label=col, 
                                             problem_type='regression', 
                                             verbosity=0)
-            y_test = test_df[col].dropna(subset=[col])
-            y_pred = self.predictors[col].predict(test_df.drop(col,axis=1).dropna(subset=[col]))
+            y_test = test_df[col].dropna()
+            y_pred = self.predictors[col].predict(test_df.dropna(subset=[col]).drop([col],axis=1))
             perf = self.predictors[col].evaluate_predictions(y_true=y_test, y_pred=y_pred, auxiliary_metrics=True)
             if perf['root_mean_squared_error'] < self.numerical_std_error_threshold * y_test.std():
                 self.predictable_columns += col
-        print(f'Found {len(self.predictable_columns)}: {self.predictable_columns}')
+        print(f'Found {len(self.predictable_columns)} predictable columns: {self.predictable_columns}')
             
     def remove_outliers(self, df: pd.DataFrame, columns=None):
         
@@ -109,7 +110,8 @@ class AutoGluonCleaner(Cleaner):
         for col in self.predictable_columns:
             df.loc[df[col].isnull(), col] = self.predictors[col].predict(df[df[col].isnull()])
             print(f'Imputed {df[col].isnull().sum()} values in column {col}')
-       return df
+
+        return df
 
     def clean(self, df: pd.DataFrame, columns=None):
 
