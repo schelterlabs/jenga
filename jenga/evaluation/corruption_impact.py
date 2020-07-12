@@ -5,15 +5,6 @@ class ValidationResult:
         self.baseline_score = baseline_score
         self.corrupted_scores = corrupted_scores
 
-class AutoCleaningValidationResult:
-
-    def __init__(self, corruption, baseline_score, corrupted_scores, score_with_cleaning, cleaner):
-        self.corruption = corruption
-        self.baseline_score = baseline_score
-        self.corrupted_scores = corrupted_scores
-        self.score_with_cleaning
-        self.cleaner = cleaner
-
 
 # Evaluate the impact of one or more data corruption on the prediction quality of a model;
 # applies the corruptions repeatedly to copies of the test data
