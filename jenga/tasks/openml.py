@@ -39,7 +39,8 @@ class OpenMLTask(BinaryClassificationTask):
                                           )
 
     def _is_categorical(self, col, max_unique_ratio = 0.05):
-        return len(col.value_counts()) / len(col) < max_unique_ratio 
+        # return len(col.value_counts()) / len(col) < max_unique_ratio 
+        return pd.api.types.is_categorical_dtype(col)
 
     def _guess_dtypes(self, df):
         categorical_columns = [c for c in df.columns if self._is_categorical(df[c])]

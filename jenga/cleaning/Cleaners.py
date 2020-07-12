@@ -38,6 +38,90 @@ class Cleaner:
     def clean(self, df, columns=None):
         pass
 
+class DatawigCleaner:
+    def __init__(self,
+                numeric_columns=None,
+                categorical_columns=None,
+                text_columns=None,
+                categorical_precision_threshold=.85, 
+                numerical_std_error_threshold=1.,
+                test_size=.2):
+        self.categorical_precision_threshold = categorical_precision_threshold
+        self.numerical_std_error_threshold = numerical_std_error_threshold
+        self.categorical_columns = categorical_columns
+        self.numeric_columns = numeric_columns
+        self.test_size=test_size
+        self.predictors = {}
+        self.predictable_columns = []
+
+    def fit(self, df, columns=None):
+        pass
+
+    def remove_outliers(self, df, columns=None):
+        pass
+
+    def impute(self, df, columns=None):
+        pass
+
+    def clean(self, df, columns=None):
+        pass
+
+class SklearnCleaner:
+    def __init__(self,
+                numeric_columns=None,
+                categorical_columns=None,
+                text_columns=None,
+                categorical_precision_threshold=.85, 
+                numerical_std_error_threshold=1.,
+                test_size=.2):
+        self.categorical_precision_threshold = categorical_precision_threshold
+        self.numerical_std_error_threshold = numerical_std_error_threshold
+        self.categorical_columns = categorical_columns
+        self.numeric_columns = numeric_columns
+        self.test_size=test_size
+        self.predictors = {}
+        self.predictable_columns = []
+
+    def fit(self, df, columns=None):
+        pass
+
+    def remove_outliers(self, df, columns=None):
+        pass
+
+    def impute(self, df, columns=None):
+        pass
+
+    def clean(self, df, columns=None):
+        pass
+
+class AutoencoderCleaner:
+    def __init__(self,
+                numeric_columns=None,
+                categorical_columns=None,
+                text_columns=None,
+                categorical_precision_threshold=.85, 
+                numerical_std_error_threshold=1.,
+                test_size=.2):
+        self.categorical_precision_threshold = categorical_precision_threshold
+        self.numerical_std_error_threshold = numerical_std_error_threshold
+        self.categorical_columns = categorical_columns
+        self.numeric_columns = numeric_columns
+        self.test_size=test_size
+        self.predictors = {}
+        self.predictable_columns = []
+
+    def fit(self, df, columns=None):
+        pass
+
+    def remove_outliers(self, df, columns=None):
+        pass
+
+    def impute(self, df, columns=None):
+        pass
+
+    def clean(self, df, columns=None):
+        pass
+
 class AutoGluonCleaner(Cleaner):
 
     def fit(self, df, columns=None):

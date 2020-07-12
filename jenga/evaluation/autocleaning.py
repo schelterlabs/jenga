@@ -18,7 +18,7 @@ class AutoCleaningEvaluator:
         self.__task = task
         self.__cleaner = cleaner
 
-    def compute_eval_score(self, test_data):
+    def compute_eval_score(self, model, test_data):
         predictions = model.predict_proba(test_data)
         return self.__task.score_on_test_data(predictions)
 
@@ -26,7 +26,7 @@ class AutoCleaningEvaluator:
         
         test_data_copy = self.__task.test_data.copy()
 
-        baseline_score = self.compute_eval_score(test_data_copy)
+        baseline_score = self.compute_eval_score(model, test_data_copy)
 
         results = []
 
@@ -49,16 +49,16 @@ class AutoCleaningEvaluator:
                 test_data_copy = self.__task.test_data.copy(deep=True)
                 
                 corrupted_data = corruption.transform(test_data_copy)
-                corrupted_scores += self.compute_eval_score(corrupted_data)
+                corrupted_scores += self.compute_eval_score(model, corrupted_data)
 
                 df_outliers_removed = self.__cleaner.remove_outliers(corrupted_data)
-                scores_with_anomaly_removal += self.compute_eval_score(df_outliers_removed)
+                scores_with_anomaly_removal += self.compute_eval_score(model, df_outliers_removed)
 
                 df_imputed = self.__cleaner.impute(corrupted_data)
-                scores_with_imputation += self.compute_eval_score(df_imputed)
+                scores_with_imputation += self.compute_eval_score(model, df_imputed)
 
                 df_cleaned = self.__cleaner.impute(df_outliers_removed)
-                scores_with_cleaning += self.compute_eval_score(df_cleaned)
+                scores_with_cleaning += self.compute_eval_score(model, df_cleaned)
 
                 if current_run % 10 == 0:
                     print(f"{current_run}/{num_results} ({time.process_time() - t})")
