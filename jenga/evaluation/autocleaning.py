@@ -1,13 +1,20 @@
 class AutoCleaningValidationResult:
 
-    def __init__(self, corruption, baseline_score, corrupted_scores, score_with_cleaning, cleaner):
+    def __init__(self, 
+                 corruption, 
+                 cleaner, 
+                 baseline_score, 
+                 corrupted_scores, 
+                 score_with_anomaly_removal,
+                 score_with_imputation,
+                 score_with_cleaning):
         self.corruption = corruption
         self.cleaner = cleaner
         self.baseline_score = baseline_score
         self.corrupted_scores = corrupted_scores
-        self.score_with_anomaly_removal
-        self.score_with_imputation
-        self.score_with_cleaning
+        self.score_with_anomaly_removal = score_with_anomaly_removal
+        self.score_with_imputation = score_with_imputation
+        self.score_with_cleaning = score_with_cleaning
 
 # Evaluate the impact of one or more data corruption on the prediction quality of a model;
 # applies the corruptions repeatedly to copies of the test data
@@ -20,6 +27,7 @@ class AutoCleaningEvaluator:
 
     def compute_eval_score(self, model, test_data):
         predictions = model.predict_proba(test_data)
+        print(self.__task.score_on_test_data(predictions))
         return self.__task.score_on_test_data(predictions)
 
     def evaluate(self, model, num_repetitions, *corruptions):
@@ -49,24 +57,24 @@ class AutoCleaningEvaluator:
                 test_data_copy = self.__task.test_data.copy(deep=True)
                 
                 corrupted_data = corruption.transform(test_data_copy)
-                corrupted_scores += self.compute_eval_score(model, corrupted_data)
+                corrupted_scores.append(self.compute_eval_score(model, corrupted_data))
 
                 df_outliers_removed = self.__cleaner.remove_outliers(corrupted_data)
                 scores_with_anomaly_removal += self.compute_eval_score(model, df_outliers_removed)
 
                 df_imputed = self.__cleaner.impute(corrupted_data)
-                scores_with_imputation += self.compute_eval_score(model, df_imputed)
+                scores_with_imputation.append(self.compute_eval_score(model, df_imputed))
 
                 df_cleaned = self.__cleaner.impute(df_outliers_removed)
-                scores_with_cleaning += self.compute_eval_score(model, df_cleaned)
+                scores_with_cleaning.append(self.compute_eval_score(model, df_cleaned))
 
                 if current_run % 10 == 0:
                     print(f"{current_run}/{num_results} ({time.process_time() - t})")
                 current_run += 1
 
             results.append(
-                ValidationResult(corruption, 
-                                 cleaner,
+                AutoCleaningValidationResult(corruption, 
+                                 self.__cleaner,
                                  baseline_score, 
                                  corrupted_scores,
                                  scores_with_anomaly_removal,

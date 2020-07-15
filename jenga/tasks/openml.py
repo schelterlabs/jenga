@@ -23,6 +23,8 @@ class OpenMLTask(BinaryClassificationTask):
         X, y = fetch_openml(data_id=self.openml_id, as_frame=True, return_X_y=True)
 
         categorical_columns, numeric_columns = self._guess_dtypes(X)
+        print(f'Found {len(categorical_columns)} categorical columns: {categorical_columns}')
+        print(f'Found {len(numeric_columns)} numeric columns: {numeric_columns}')
         
         labels = y.unique()
         
@@ -53,14 +55,19 @@ class OpenMLTask(BinaryClassificationTask):
         for col in self.categorical_columns:
             train_data[col] = train_data[col].astype(str)
 
-        mark_missing_and_encode = Pipeline([
+        categorical_preprocessing = Pipeline([
             ('mark_missing', SimpleImputer(strategy='constant', fill_value='__NA__')),
             ('one_hot_encode', OneHotEncoder(handle_unknown='ignore'))
         ])
 
+        numeric_preprocessing = Pipeline([
+            ('mark_missing', SimpleImputer(strategy='constant', fill_value=0)),
+            ('scaling',  StandardScaler())
+        ])
+
         feature_transformation = ColumnTransformer(transformers=[
-            ('categorical_features', mark_missing_and_encode, self.categorical_columns),
-            ('scaled_numeric', StandardScaler(), self.numerical_columns)
+            ('categorical_features', categorical_preprocessing, self.categorical_columns),
+            ('scaled_numeric', numeric_preprocessing, self.numerical_columns)
         ])
 
         param_grid = {
