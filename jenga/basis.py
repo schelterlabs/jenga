@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 import random
 
@@ -65,3 +66,45 @@ class DataCorruption:
 
     def __str__(self):
         return f"{self.__class__.__name__}: {self.__dict__}"
+
+
+class TabularCorruption(DataCorruption):
+    def __init__(self, column, fraction, sampling = 'MCAR'):
+        '''
+        Corruptions for structured data
+        Input: 
+        column:    column to perturb, string
+        fraction:   fraction of rows to corrupt, float between 0 and 1
+        sampling:   sampling mechanism for corruptions, string in ['MCAR', 'MAR', 'MNAR'] 
+        '''
+        self.column = column
+        self.fraction = fraction
+        self.sampling = sampling
+    
+    def get_dtype(self, df):
+        numeric_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+        non_numeric_cols = [c for c in df.columns if c not in numeric_cols]
+        return numeric_cols, non_numeric_cols
+
+    def sample_rows(self, data):
+
+        # Missing Completely At Random
+        if self.sampling == 'MCAR':
+            rows = np.random.permutation(data.index)[:int(len(data)*self.fraction)]
+        else:
+            n_values_to_discard = int(len(data) * min(self.fraction, 1.0))
+            perc_lower_start = np.random.randint(0, len(data) - n_values_to_discard)
+            perc_idx = range(perc_lower_start, perc_lower_start + n_values_to_discard)
+
+            # Missing At Random
+            if self.sampling == 'MAR':
+                depends_on_col = np.random.choice(list(set(data.columns) - {self.column}))
+                # pick a random percentile of values in other column
+                rows = data[depends_on_col].sort_values().iloc[perc_idx].index
+
+            # Missing Not At Random
+            else:
+                # pick a random percentile of values in this column
+                rows = data[self.column].sort_values().iloc[perc_idx].index
+        return rows
+

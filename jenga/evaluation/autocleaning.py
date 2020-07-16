@@ -60,7 +60,7 @@ class AutoCleaningEvaluator:
                 corrupted_scores.append(self.compute_eval_score(model, corrupted_data))
 
                 df_outliers_removed = self.__cleaner.remove_outliers(corrupted_data)
-                scores_with_anomaly_removal += self.compute_eval_score(model, df_outliers_removed)
+                scores_with_anomaly_removal.append(self.compute_eval_score(model, df_outliers_removed))
 
                 df_imputed = self.__cleaner.impute(corrupted_data)
                 scores_with_imputation.append(self.compute_eval_score(model, df_imputed))
