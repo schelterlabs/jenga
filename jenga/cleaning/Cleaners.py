@@ -112,63 +112,64 @@ class SklearnCleaner(Cleaner):
 
         df = self._categorical_columns_to_string(df)
 
-        categorical_preprocessing = Pipeline([
-            ('mark_missing', SimpleImputer(strategy='constant', fill_value='__NA__')),
-            ('one_hot_encode', OneHotEncoder(handle_unknown='ignore'))
-        ])
-
-        numeric_preprocessing = Pipeline([
-            ('mark_missing', SimpleImputer(strategy='median')),
-            ('scaling',  StandardScaler())
-        ])
+        
 
         train_df, test_df = train_test_split(df, test_size=self.test_size)
 
-        for col in self.categorical_columns:
-
-            feature_transformation = ColumnTransformer(transformers=[
-                ('categorical_features', categorical_preprocessing, list(set(self.categorical_columns)-set(col))),
-                ('scaled_numeric', numeric_preprocessing, self.numeric_columns)
+        for col in columns:
+            categorical_preprocessing = Pipeline([
+            ('mark_missing', SimpleImputer(strategy='constant', fill_value='__NA__')),
+            ('one_hot_encode', OneHotEncoder(handle_unknown='ignore'))
             ])
 
-            param_grid = {
-                'learner__n_estimators': [10, 100],
-            }
-
-            pipeline = Pipeline([
-                ('features', feature_transformation),
-                ('learner', GradientBoostingClassifier())])
-
-            search = GridSearchCV(pipeline, param_grid, cv=2, verbose=0, n_jobs=-1)
-            self.predictors[col] = search.fit(train_df, train_df[col])
-
-            # prec-rec curves for finding the likelihood thresholds for minimal precision
-            self.predictors[col].thresholds = {}
-            for label_idx, label in enumerate(self.predictors[col].classes_):
-                prec, rec, threshold = precision_recall_curve(1.*(test_df[col]==label), 
-                                                            p.predict_proba(test_df)[:,label_idx])
-                threshold_for_minimal_precision = threshold[(prec > prec_threshold).nonzero()[0][0]]
-                self.predictors[col].thresholds[label] = threshold_for_minimal_precision
-
-        for col in self.numeric_columns:
-            feature_transformation = ColumnTransformer(transformers=[
-                ('categorical_features', categorical_preprocessing, self.categorical_columns),
-                ('scaled_numeric', numeric_preprocessing, list(set(self.numeric_columns)-set(col)))
+            numeric_preprocessing = Pipeline([
+                ('mark_missing', SimpleImputer(strategy='median')),
+                ('scaling',  StandardScaler())
             ])
+            if col in self.categorical_columns:
+                feature_transformation = ColumnTransformer(transformers=[
+                    ('categorical_features', categorical_preprocessing, list(set(self.categorical_columns)-{col})),
+                    ('scaled_numeric', numeric_preprocessing, self.numeric_columns)
+                ])
 
-            param_grid = {
-                'learner__n_estimators': [10, 100],
-            }
+                param_grid = {
+                    'learner__n_estimators': [10, 100],
+                }
 
-            self.predictors[col] = {}
-            for perc_name, percentile in zip(['lower','median','upper'],
-                [1.-self.numeric_error_percentile, .5, self.numeric_error_percentile]):
                 pipeline = Pipeline([
                     ('features', feature_transformation),
-                    ('learner', GradientBoostingRegressor(loss='quantile',alpha=percentile))])
+                    ('learner', GradientBoostingClassifier())])
+                search = GridSearchCV(pipeline, param_grid, cv=2, verbose=0, n_jobs=1)
+                self.predictors[col] = search.fit(train_df, train_df[col])
 
-                search = GridSearchCV(pipeline, param_grid, cv=2, verbose=0, n_jobs=-1)
-                self.predictors[col][perc_name] = search.fit(train_df, train_df[col])
+                # prec-rec curves for finding the likelihood thresholds for minimal precision
+                self.predictors[col].thresholds = {}
+                probas = self.predictors[col].predict_proba(test_df)
+                for label_idx, label in enumerate(self.predictors[col].classes_):
+                    prec, rec, threshold = precision_recall_curve(test_df[col]==label, probas[:,label_idx], pos_label=True)
+                    threshold_for_minimal_precision = threshold[(prec >= self.categorical_precision_threshold).nonzero()[0][0]]
+                    self.predictors[col].thresholds[label] = threshold_for_minimal_precision
+
+            elif col in self.numeric_columns:
+                feature_transformation = ColumnTransformer(transformers=[
+                    ('categorical_features', categorical_preprocessing, self.categorical_columns),
+                    ('scaled_numeric', numeric_preprocessing, list(set(self.numeric_columns)-{col}))
+                ])
+
+                param_grid = {
+                    'learner__n_estimators': [10, 100],
+                }
+
+                self.predictors[col] = {}
+                for perc_name, percentile in zip(['lower','median','upper'],
+                    [1.-self.numeric_error_percentile, .5, self.numeric_error_percentile]):
+                    pipeline = Pipeline([
+                        ('features', feature_transformation),
+                        ('learner', GradientBoostingRegressor(loss='quantile',alpha=percentile))])
+
+                    search = GridSearchCV(pipeline, param_grid, cv=2, verbose=0, n_jobs=-1)
+                    self.predictors[col][perc_name] = search.fit(train_df, train_df[col])
+        return self
 
     def remove_outliers(self, df, columns=None):
         if not columns:
@@ -182,7 +183,8 @@ class SklearnCleaner(Cleaner):
                 y_pred = self.predictors[col].predict(df)    
                 y_proba = self.predictors[col].predict_proba(df)    
                 for label_idx, label in enumerate(self.predictors[col].classes_):
-                    above_prec_predictions = self.predictors[col].thresholds[label] < y_proba[:,label_idx]
+                    # import pdb;pdb.set_trace()
+                    above_prec_predictions = self.predictors[col].thresholds[label] <= y_proba[:,label_idx]
                     outliers = above_prec_predictions & (df[col] != y_pred)
 
             if col in self.numeric_columns:

@@ -70,6 +70,7 @@ class SwappedValues(TabularCorruption):
 class CategoricalShift(TabularCorruption):
     def transform(self, data):
         df = data.copy(deep=True)
+        rows = self.sample_rows(df)
         numeric_cols, non_numeric_cols = self.get_dtype(df)
         if self.column in numeric_cols:
             print('CategoricalShift implemented only for categorical variables')
@@ -77,7 +78,7 @@ class CategoricalShift(TabularCorruption):
         else:
             histogram = df[self.column].value_counts()
             random_other_val = np.random.permutation(histogram.index)
-            df[self.column] = df[self.column].replace(histogram.index, random_other_val)
+            df.loc[rows, self.column] = df.loc[rows, self.column].replace(histogram.index, random_other_val)
             return df
 
 
