@@ -15,9 +15,9 @@ Jenga's goal is assist data scientists with detecting such errors early, so that
 Note that you can implement custom tasks and data corruptions by extending the corresponding provided [base classes](https://github.com/schelterlabs/jenga/blob/master/jenga/basis.py).
 
 We additionally provide three advanced usage examples of Jenga:
- * [Studying the impact of missing values](cikm-submission-missing-value-imputation.ipynb)
- * [Stress testing a feature schema](cikm-submission-schema-stresstest.ipynb)
- * [Evaluating the helpfulness of data augmentation for an image recognition task](cikm-submission-image-augmentation.ipynb)
+ * [Studying the impact of missing values](example-missing-value-imputation.ipynb)
+ * [Stress testing a feature schema](example-schema-stresstest.ipynb)
+ * [Evaluating the helpfulness of data augmentation for an image recognition task](example-image-augmentation.ipynb)
 
 ## Installation
 
