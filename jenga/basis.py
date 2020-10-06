@@ -5,7 +5,6 @@ import random
 from abc import ABC, abstractmethod
 from sklearn.metrics import roc_auc_score
 
-
 # Base class for binary classification tasks, including training data, test data, a baseline model and scoring
 class BinaryClassificationTask(ABC):
 
@@ -31,7 +30,13 @@ class BinaryClassificationTask(ABC):
         # Fix random seeds for reproducibility
         random.seed(seed)
         np.random.seed(seed)
-        tf.set_random_seed(seed)
+
+        try:
+            # If tensorflow 1
+            tf.set_random_seed(seed) 
+        except:
+            # If tensorflow 2
+            tf.compat.v1.set_random_seed(seed)
 
         # Train and test data and labels
         self.train_data = train_data
