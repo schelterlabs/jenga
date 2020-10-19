@@ -1,41 +1,30 @@
 import numpy as np
+import pandas as pd
 import random
-from jenga.basis import DataCorruption
+from jenga.basis import DataCorruption, TabularCorruption
 
 
 # Inject different kinds of missing values
-class MissingValues(DataCorruption):
+class MissingValues(TabularCorruption):
 
-    def __init__(self, column, fraction, na_value, missingness='MCAR'):
-        self.column = column
-        self.fraction = fraction
-        self.na_value = na_value
-        self.missingness = missingness
-        DataCorruption.__init__(self)
-
+    def __init__(self, column, fraction, na_value=np.nan, missingness='MCAR'):
+            '''
+            Corruptions for structured data
+            Input: 
+            column:    column to perturb, string
+            fraction:   fraction of rows to corrupt, float between 0 and 1
+            na_value:   value
+            missingness:   sampling mechanism for corruptions, string in ['MCAR', 'MAR', 'MNAR'] 
+            '''
+            self.column = column
+            self.fraction = fraction
+            self.sampling = missingness
+            self.na_value = na_value
+            
     def transform(self, data):
         corrupted_data = data.copy(deep=True)
-
-        # Missing Completely At Random
-        if self.missingness == 'MCAR':
-            missing_indices = np.random.rand(len(data)) < self.fraction
-        else:
-            n_values_to_discard = int(len(data) * min(self.fraction, 1.0))
-            perc_lower_start = np.random.randint(0, len(data) - n_values_to_discard)
-            perc_idx = range(perc_lower_start, perc_lower_start + n_values_to_discard)
-
-            # Missing At Random
-            if self.missingness == 'MAR':
-                depends_on_col = np.random.choice(list(set(data.columns) - {self.column}))
-                # pick a random percentile of values in other column
-                missing_indices = corrupted_data[depends_on_col].sort_values().iloc[perc_idx].index
-
-            # Missing Not At Random
-            else:
-                # pick a random percentile of values in this column
-                missing_indices = corrupted_data[self.column].sort_values().iloc[perc_idx].index
-
-        corrupted_data.loc[missing_indices, [self.column]] = self.na_value
+        rows = self.sample_rows(corrupted_data)
+        corrupted_data.loc[rows, [self.column]] = self.na_value
         return corrupted_data
 
 
@@ -77,27 +66,38 @@ class MissingValuesBasedOnEntropy(DataCorruption):
 
 # Swapping a fraction of the values between two columns, mimics input errors in forms
 # and programming errors during data preparation
-class SwappedValues(DataCorruption):
+class SwappedValues(TabularCorruption):
+    
+    def __init__(self, column, fraction, sampling = 'CAR', swap_with=None):
+        TabularCorruption.__init__(self, column, fraction, sampling)
+        self.swap_with = swap_with
 
-    def __init__(self, column_a, column_b, fraction):
-        self.column_a = column_a
-        self.column_b = column_b
-        self.fraction = fraction
-        DataCorruption.__init__(self)
+    def transform(self, data):
+        df = data.copy(deep=True)        
+        if not self.swap_with:
+            self.swap_with = np.random.choice([c for c in data.columns if c != self.column])
 
-    def transform(self, clean_df):
-        df = clean_df.copy(deep=True)
+        rows = self.sample_rows(df)
 
-        values_of_column_a = list(df[self.column_a])
-        values_of_column_b = list(df[self.column_b])
-
-        for index in range(0, len(values_of_column_a)):
-            if random.random() < self.fraction:
-                temp_value = values_of_column_a[index]
-                values_of_column_a[index] = values_of_column_b[index]
-                values_of_column_b[index] = temp_value
-
-        df[self.column_a] = values_of_column_a
-        df[self.column_b] = values_of_column_b
+        tmp_vals = df.loc[rows,self.swap_with].copy(deep=True)
+        df.loc[rows, self.swap_with] = df.loc[rows, self.column]
+        df.loc[rows, self.column] = tmp_vals
 
         return df
+
+class CategoricalShift(TabularCorruption):
+    def transform(self, data):
+        df = data.copy(deep=True)
+        rows = self.sample_rows(df)
+        numeric_cols, non_numeric_cols = self.get_dtype(df)
+        if self.column in numeric_cols:
+            print('CategoricalShift implemented only for categorical variables')
+            return df
+        else:
+            histogram = df[self.column].value_counts()
+            random_other_val = np.random.permutation(histogram.index)
+            df.loc[rows, self.column] = df.loc[rows, self.column].replace(histogram.index, random_other_val)
+            return df
+
+
+
