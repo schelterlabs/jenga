@@ -133,14 +133,15 @@ class SklearnCleaner(Cleaner):
                 ])
 
                 param_grid = {
-                    'learner__n_estimators': [10, 100],
+                    'learner__n_estimators': [100, 200],
                 }
 
                 pipeline = Pipeline([
                     ('features', feature_transformation),
                     ('learner', GradientBoostingClassifier())])
-                search = GridSearchCV(pipeline, param_grid, cv=2, verbose=0, n_jobs=1)
+                search = GridSearchCV(pipeline, param_grid, cv=2, verbose=0, n_jobs=-1)
                 self.predictors[col] = search.fit(train_df, train_df[col])
+                print(f'Classifer for column {col} reached {search.best_score_}')
 
                 # prec-rec curves for finding the likelihood thresholds for minimal precision
                 self.predictors[col].thresholds = {}
@@ -149,6 +150,7 @@ class SklearnCleaner(Cleaner):
                     prec, rec, threshold = precision_recall_curve(test_df[col]==label, probas[:,label_idx], pos_label=True)
                     threshold_for_minimal_precision = threshold[(prec >= self.categorical_precision_threshold).nonzero()[0][0]]
                     self.predictors[col].thresholds[label] = threshold_for_minimal_precision
+
 
             elif col in self.numeric_columns:
                 feature_transformation = ColumnTransformer(transformers=[
@@ -169,6 +171,7 @@ class SklearnCleaner(Cleaner):
 
                     search = GridSearchCV(pipeline, param_grid, cv=2, verbose=0, n_jobs=-1)
                     self.predictors[col][perc_name] = search.fit(train_df, train_df[col])
+                    print(f'Regressor for column {col}/{perc_name} reached {search.best_score_}')
         return self
 
     def remove_outliers(self, df, columns=None):
@@ -183,7 +186,7 @@ class SklearnCleaner(Cleaner):
                 y_pred = self.predictors[col].predict(df)    
                 y_proba = self.predictors[col].predict_proba(df)    
                 for label_idx, label in enumerate(self.predictors[col].classes_):
-                    # import pdb;pdb.set_trace()
+                    import pdb;pdb.set_trace()
                     above_prec_predictions = self.predictors[col].thresholds[label] <= y_proba[:,label_idx]
                     outliers = above_prec_predictions & (df[col] != y_pred)
 
