@@ -8,7 +8,9 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.datasets import fetch_openml
+
+import openml
+
 from jenga.basis import BinaryClassificationTask
 
 # some binary classification tasks from 
@@ -20,7 +22,12 @@ class OpenMLTask(BinaryClassificationTask):
 
     def __init__(self, seed=0, openml_id=1448):
         self.openml_id = openml_id
-        X, y = fetch_openml(data_id=self.openml_id, as_frame=True, return_X_y=True)
+        
+        dataset = openml.datasets.get_dataset(dataset_id=self.openml_id)
+        X, y, categorical_indicator, _ = dataset.get_data(
+                        dataset_format='dataframe',
+                        target=dataset.default_target_attribute
+                    )
 
         categorical_columns, numeric_columns = self._guess_dtypes(X)
         print(f'Found {len(categorical_columns)} categorical columns: {categorical_columns}')
