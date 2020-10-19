@@ -1,16 +1,10 @@
 import random
 import numpy as np
 
-from jenga.basis import DataCorruption
-
+from jenga.basis import TabularCorruption
 
 # Add gaussian noise to an attribute, mimics noisy, unreliable measurements
-class GaussianNoise(DataCorruption):
-
-    def __init__(self, column, fraction):
-        self.column = column
-        self.fraction = fraction
-        DataCorruption.__init__(self)
+class GaussianNoise(TabularCorruption):
 
     def __str__(self):
         return f"{self.__class__.__name__}: {self.__dict__}"
@@ -21,8 +15,8 @@ class GaussianNoise(DataCorruption):
         scale = random.uniform(1, 5)
 
         if self.fraction > 0:
-            rows = np.random.uniform(size=len(df)) < self.fraction
-            noise = np.random.normal(0, scale * stddev, size=rows.sum())
+            rows = self.sample_rows(data)
+            noise = np.random.normal(0, scale * stddev, size=len(rows))
             df.loc[rows, self.column] += noise
 
         return df
@@ -30,12 +24,7 @@ class GaussianNoise(DataCorruption):
 
 # Randomly scale a fraction of the values (mimics case where someone actually changes the scale
 # of some attribute, e.g., recording a duration in milliseconds instead of seconds)
-class Scaling(DataCorruption):
-
-    def __init__(self, column, fraction):
-        self.column = column
-        self.fraction = fraction
-        DataCorruption.__init__(self)
+class Scaling(TabularCorruption):
 
     def transform(self, data):
         df = data.copy(deep=True)
@@ -43,7 +32,7 @@ class Scaling(DataCorruption):
         scale_factor = np.random.choice([10, 100, 1000])
 
         if self.fraction > 0:
-            rows = np.random.uniform(size=len(df)) < self.fraction
+            rows = self.sample_rows(data)
             df.loc[rows, self.column] *= scale_factor
 
         return df

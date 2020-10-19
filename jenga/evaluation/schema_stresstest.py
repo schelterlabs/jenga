@@ -46,7 +46,7 @@ class SchemaStresstest:
 
                 if len(task.numerical_columns) >= 2 and np.random.uniform() < 0.1:
                     affected_columns = np.random.choice(task.numerical_columns, 2)
-                    random_corruptions.add(SwappedValues(affected_columns[0], affected_columns[1], fraction))
+                    random_corruptions.add(SwappedValues(affected_columns[0], swap_with=affected_columns[1], fraction=fraction))
                 else:
 
                     corruption_type = np.random.choice(['missing', 'noise', 'scaling'])
@@ -67,7 +67,7 @@ class SchemaStresstest:
 
                 if len(task.categorical_columns) >= 2 and np.random.uniform() < 0.1:
                     affected_columns = np.random.choice(task.categorical_columns, 2)
-                    random_corruptions.add(SwappedValues(affected_columns[0], affected_columns[1], fraction))
+                    random_corruptions.add(SwappedValues(affected_columns[0], swap_with=affected_columns[1], fraction=fraction))
                 else:
                     corruption_type = np.random.choice(['missing', 'encoding'])
 
@@ -85,7 +85,7 @@ class SchemaStresstest:
 
                 if len(task.text_columns) >= 2 and np.random.uniform() < 0.1:
                     affected_columns = np.random.choice(task.text_columns, 2)
-                    random_corruptions.add(SwappedValues(affected_columns[0], affected_columns[1], fraction))
+                    random_corruptions.add(SwappedValues(affected_columns[0], swap_with=affected_columns[1], fraction=fraction))
                 else:
                     corruption_type = np.random.choice(['missing', 'encoding'])
 
