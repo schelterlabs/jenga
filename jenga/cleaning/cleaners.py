@@ -10,6 +10,8 @@ from sklearn.impute import SimpleImputer
 from autogluon import TabularPrediction as task
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 
+from pyod.models.knn import KNN
+
 class Cleaner:
     def __init__(self,
                 numeric_columns=None,
@@ -17,6 +19,7 @@ class Cleaner:
                 text_columns=None,
                 categorical_precision_threshold=.85, 
                 numerical_std_error_threshold=1.,
+                na_value=np.nan,
                 test_size=.2):
         self.categorical_precision_threshold = categorical_precision_threshold
         self.numerical_std_error_threshold = numerical_std_error_threshold
@@ -32,6 +35,26 @@ class Cleaner:
             if pd.api.types.is_categorical_dtype(df[col]):
                 df[col] = df[col].astype(str)
         return df
+    
+    def build_featurizers(self, columns):
+
+        categorical_preprocessing = Pipeline([
+            ('mark_missing', SimpleImputer(strategy='constant', fill_value='__NA__')),
+            ('one_hot_encode', OneHotEncoder(handle_unknown='ignore'))
+        ])
+
+        numeric_preprocessing = Pipeline([
+            ('mark_missing', SimpleImputer(strategy='constant', fill_value=0)),
+        ])
+
+        cat_cols = [c for c in self.categorical_columns if c in columns]
+        num_cols = [c for c in self.numeric_columns if c in columns]
+        feature_transformation = ColumnTransformer(transformers=[
+            ('categorical_features', categorical_preprocessing, cat_cols),
+            ('scaled_numeric', numeric_preprocessing, num_cols)
+        ])
+
+        return feature_transformation
 
     def fit(self, df, columns=None):
         pass
@@ -49,6 +72,68 @@ class Cleaner:
         
         return df
         
+class PyODKNNSingleColumnCleaner(Cleaner):
+    def __init__(self,
+                numeric_columns=[],
+                categorical_columns=[],
+                fraction_outliers=1e-5):
+                
+        self.fraction_outliers = fraction_outliers
+        self.categorical_columns = categorical_columns
+        self.numeric_columns = numeric_columns
+        self.predictors = {}
+        for col in self.categorical_columns + self.numeric_columns:
+            self.predictors[col] = Pipeline(
+                [('features', self.build_featurizers([col])),
+                 ('outlier_detector', KNN(contamination=self.fraction_outliers))
+                 ])
+    
+    def fit(self, df):
+        for col in self.categorical_columns + self.numeric_columns:
+            self.predictors[col].fit(df)
+
+    def remove_outliers(self, df):
+
+        for col in self.categorical_columns + self.numeric_columns:
+            outliers = self.predictors[col].predict(df)
+            df.loc[outliers==1, col] = np.nan
+        return df
+
+    def impute(self, df):
+        pass
+
+    def clean(self, df: pd.DataFrame):
+        df = self.remove_outliers(df)
+        return df
+
+class PyODKNNMultiColumnCleaner(Cleaner):
+    def __init__(self,
+                numeric_columns=[],
+                categorical_columns=[],
+                fraction_outliers=1e-5):
+                
+        self.fraction_outliers = fraction_outliers
+        self.categorical_columns = categorical_columns
+        self.numeric_columns = numeric_columns
+        self.predictor = Pipeline(
+                [('features', self.build_featurizers(self.numeric_columns + self.categorical_columns)),
+                 ('outlier_detector', KNN(contamination=self.fraction_outliers))
+                 ])
+    
+    def fit(self, df):
+        self.predictor.fit(df)
+
+    def remove_outliers(self, df):
+        outliers = self.predictor.predict(df)
+        df.loc[outliers==1, :] = np.nan
+        return df
+
+    def impute(self, df):
+        pass
+
+    def clean(self, df: pd.DataFrame):
+        df = self.remove_outliers(df)
+        return df
 
 class DatawigCleaner:
     def __init__(self,
