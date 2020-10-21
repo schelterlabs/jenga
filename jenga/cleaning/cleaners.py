@@ -100,7 +100,7 @@ class PyODKNNSingleColumnCleaner(Cleaner):
         return df
 
     def impute(self, df):
-        pass
+        return df
 
     def clean(self, df: pd.DataFrame):
         df = self.remove_outliers(df)
@@ -129,7 +129,7 @@ class PyODKNNMultiColumnCleaner(Cleaner):
         return df
 
     def impute(self, df):
-        pass
+        return df
 
     def clean(self, df: pd.DataFrame):
         df = self.remove_outliers(df)

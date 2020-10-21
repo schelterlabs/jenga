@@ -27,7 +27,6 @@ class AutoCleaningEvaluator:
 
     def compute_eval_score(self, model, test_data):
         predictions = model.predict_proba(test_data)
-        print(self.__task.score_on_test_data(predictions))
         return self.__task.score_on_test_data(predictions)
 
     def evaluate(self, model, num_repetitions, *corruptions):
@@ -59,7 +58,7 @@ class AutoCleaningEvaluator:
                 corrupted_data = corruption.transform(test_data_copy)
                 corrupted_scores.append(self.compute_eval_score(model, corrupted_data))
 
-                df_outliers_removed = self.__cleaner.remove_outliers(corrupted_data)
+                df_outliers_removed = self.__cleaner.remove_outliers(corrupted_data) 
                 scores_with_anomaly_removal.append(self.compute_eval_score(model, df_outliers_removed))
 
                 df_imputed = self.__cleaner.impute(corrupted_data)
@@ -69,7 +68,7 @@ class AutoCleaningEvaluator:
                 scores_with_cleaning.append(self.compute_eval_score(model, df_cleaned))
 
                 if current_run % 10 == 0:
-                    print(f"{current_run}/{num_results} ({time.process_time() - t})")
+                    print(f"Evaluation {current_run}/{num_results} ({time.process_time() - t}s)")
                 current_run += 1
 
             results.append(
