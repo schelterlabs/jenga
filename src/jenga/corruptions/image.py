@@ -13,7 +13,7 @@ class ImageCorruption(DataCorruption):
     def __init__(self, fraction, corruptions):
         self.fraction = fraction
         self.corruptions = corruptions
-        DataCorruption.__init__(self)
+        super().__init__()
 
     def transform(self, data):
         corrupted_images = data.copy()
@@ -42,46 +42,46 @@ class ImageCorruption(DataCorruption):
 class GaussianNoiseCorruption(ImageCorruption):
 
     def __init__(self, fraction, severity):
-        ImageCorruption.__init__(self, fraction, [iaa.imgcorruptlike.GaussianNoise(severity=severity)])
+        super().__init__(fraction, [iaa.imgcorruptlike.GaussianNoise(severity=severity)])
 
 
 class GlassBlurCorruption(ImageCorruption):
 
     def __init__(self, fraction, severity):
-        ImageCorruption.__init__(self, fraction, [iaa.imgcorruptlike.GlassBlur(severity=severity)])
+        super().__init__(fraction, [iaa.imgcorruptlike.GlassBlur(severity=severity)])
 
 
 class SnowCorruption(ImageCorruption):
 
     def __init__(self, fraction, severity):
-        ImageCorruption.__init__(self, fraction, [iaa.imgcorruptlike.Snow(severity=severity)])
+        super().__init__(fraction, [iaa.imgcorruptlike.Snow(severity=severity)])
 
 
 class MotionBlurCorruption(ImageCorruption):
 
     def __init__(self, fraction, severity):
-        ImageCorruption.__init__(self, fraction, [iaa.imgcorruptlike.MotionBlur(severity=severity)])
+        super().__init__(fraction, [iaa.imgcorruptlike.MotionBlur(severity=severity)])
 
 
 class DefocusBlurCorruption(ImageCorruption):
 
     def __init__(self, fraction, severity):
-        ImageCorruption.__init__(self, fraction, [iaa.imgcorruptlike.DefocusBlur(severity=severity)])
+        super().__init__(fraction, [iaa.imgcorruptlike.DefocusBlur(severity=severity)])
 
 
 class FogCorruption(ImageCorruption):
 
     def __init__(self, fraction, severity):
-        ImageCorruption.__init__(self, fraction, [iaa.imgcorruptlike.Fog(severity=severity)])
+        super().__init__(fraction, [iaa.imgcorruptlike.Fog(severity=severity)])
 
 
 class ContrastCorruption(ImageCorruption):
 
     def __init__(self, fraction, severity):
-        ImageCorruption.__init__(self, fraction, [iaa.imgcorruptlike.Contrast(severity=severity)])
+        super().__init__(fraction, [iaa.imgcorruptlike.Contrast(severity=severity)])
 
 
 class BrightnessCorruption(ImageCorruption):
 
     def __init__(self, fraction, severity):
-        ImageCorruption.__init__(self, fraction, [iaa.imgcorruptlike.Brightness(severity=severity)])
+        super().__init__(fraction, [iaa.imgcorruptlike.Brightness(severity=severity)])

@@ -40,29 +40,37 @@ class VideogameReviewsTask(BinaryClassificationTask):
         # We drop this column, the prediction task is to easy otherwise
         raw_data = raw_data.drop(['total_votes'], axis=1)
 
-        raw_data[['product_title', 'review_headline', 'review_body']] = raw_data[
-            ['product_title', 'review_headline', 'review_body']].fillna(value='')
-        raw_data['title_and_review_text'] = raw_data.product_title + ' ' + raw_data.review_headline + \
-            ' ' + raw_data.review_body
+        raw_data[['product_title', 'review_headline', 'review_body']] = raw_data[['product_title', 'review_headline', 'review_body']].fillna(value='')
+        raw_data['title_and_review_text'] = raw_data.product_title + ' ' + raw_data.review_headline + ' ' + raw_data.review_body
 
         train_data = self.__extract_data(raw_data, '2015-05-04', '2015-06-14')
         test_data = self.__extract_data(raw_data, '2015-06-15', '2015-06-28')
         train_labels = self.__extract_labels(raw_data, '2015-05-04', '2015-06-14')
         test_labels = self.__extract_labels(raw_data, '2015-06-15', '2015-06-28')
 
-        BinaryClassificationTask.__init__(self,
-                                          seed,
-                                          train_data,
-                                          train_labels,
-                                          test_data,
-                                          test_labels,
-                                          categorical_columns=['marketplace', 'customer_id', 'review_id',
-                                                               'product_id', 'product_parent', 'vine',
-                                                               'verified_purchase'],
-                                          numerical_columns=['star_rating'],
-                                          text_columns=['product_title', 'review_headline', 'review_body',
-                                                        'title_and_review_text']
-                                          )
+        super().__init__(
+            seed,
+            train_data,
+            train_labels,
+            test_data,
+            test_labels,
+            categorical_columns=[
+                'marketplace',
+                'customer_id',
+                'review_id',
+                'product_id',
+                'product_parent',
+                'vine',
+                'verified_purchase'
+            ],
+            numerical_columns=['star_rating'],
+            text_columns=[
+                'product_title',
+                'review_headline',
+                'review_body',
+                'title_and_review_text'
+            ]
+        )
 
     @staticmethod
     def __extract_data(raw_data, start_date, end_date):
@@ -82,11 +90,14 @@ class VideogameReviewsTask(BinaryClassificationTask):
         numerical_attributes = ['star_rating']
         categorical_attributes = ['vine', 'verified_purchase']
 
-        feature_transformation = ColumnTransformer(transformers=[
-            ('numerical_features', StandardScaler(), numerical_attributes),
-            ('categorical_features', OneHotEncoder(handle_unknown='ignore'), categorical_attributes),
-            ('textual_features', HashingVectorizer(ngram_range=(1, 3), n_features=10000), 'title_and_review_text')
-        ], sparse_threshold=1.0)
+        feature_transformation = ColumnTransformer(
+            transformers=[
+                ('numerical_features', StandardScaler(), numerical_attributes),
+                ('categorical_features', OneHotEncoder(handle_unknown='ignore'), categorical_attributes),
+                ('textual_features', HashingVectorizer(ngram_range=(1, 3), n_features=10000), 'title_and_review_text')
+            ],
+            sparse_threshold=1.0
+        )
 
         param_grid = {
             'learner__loss': ['log'],
@@ -94,9 +105,12 @@ class VideogameReviewsTask(BinaryClassificationTask):
             'learner__alpha': [0.0001, 0.001, 0.01, 0.1]
         }
 
-        pipeline = Pipeline([
-            ('features', feature_transformation),
-            ('learner', SGDClassifier(max_iter=1000))])
+        pipeline = Pipeline(
+            [
+                ('features', feature_transformation),
+                ('learner', SGDClassifier(max_iter=1000))
+            ]
+        )
 
         search = GridSearchCV(pipeline, param_grid, scoring='roc_auc', cv=5, n_jobs=-1)
         return search.fit(train_data, train_labels)

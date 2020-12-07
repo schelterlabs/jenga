@@ -27,15 +27,15 @@ class OpenMLTask(BinaryClassificationTask):
 
         train_data, test_data, train_labels, test_labels = train_test_split(X, y, test_size=0.2)
 
-        BinaryClassificationTask.__init__(self,
-                                          seed,
-                                          train_data,
-                                          train_labels,
-                                          test_data,
-                                          test_labels,
-                                          categorical_columns=categorical_columns,
-                                          numerical_columns=numeric_columns
-                                          )
+        super().__init__(
+            seed,
+            train_data,
+            train_labels,
+            test_data,
+            test_labels,
+            categorical_columns=categorical_columns,
+            numerical_columns=numeric_columns
+        )
 
     def _is_categorical(self, col, max_unique_ratio=0.05):
         # return len(col.value_counts()) / len(col) < max_unique_ratio
@@ -51,29 +51,37 @@ class OpenMLTask(BinaryClassificationTask):
         for col in self.categorical_columns:
             train_data[col] = train_data[col].astype(str)
 
-        categorical_preprocessing = Pipeline([
-            ('mark_missing', SimpleImputer(strategy='constant', fill_value='__NA__')),
-            ('one_hot_encode', OneHotEncoder(handle_unknown='ignore'))
-        ])
+        categorical_preprocessing = Pipeline(
+            [
+                ('mark_missing', SimpleImputer(strategy='constant', fill_value='__NA__')),
+                ('one_hot_encode', OneHotEncoder(handle_unknown='ignore'))
+            ]
+        )
 
-        numeric_preprocessing = Pipeline([
-            ('mark_missing', SimpleImputer(strategy='constant', fill_value=0)),
-            ('scaling',  StandardScaler())
-        ])
+        numeric_preprocessing = Pipeline(
+            [
+                ('mark_missing', SimpleImputer(strategy='constant', fill_value=0)),
+                ('scaling',  StandardScaler())
+            ]
+        )
 
         feature_transformation = ColumnTransformer(transformers=[
-            ('categorical_features', categorical_preprocessing, self.categorical_columns),
-            ('scaled_numeric', numeric_preprocessing, self.numerical_columns)
-        ])
+                ('categorical_features', categorical_preprocessing, self.categorical_columns),
+                ('scaled_numeric', numeric_preprocessing, self.numerical_columns)
+            ]
+        )
 
         param_grid = {
             'learner__loss': ['log'],
             'learner__alpha': [0.0001, 0.001, 0.01]
         }
 
-        pipeline = Pipeline([
-            ('features', feature_transformation),
-            ('learner', SGDClassifier(max_iter=1000))])
+        pipeline = Pipeline(
+            [
+                ('features', feature_transformation),
+                ('learner', SGDClassifier(max_iter=1000))
+            ]
+        )
 
         search = GridSearchCV(pipeline, param_grid, scoring='roc_auc', cv=5, verbose=1, n_jobs=-1)
         model = search.fit(train_data, train_labels)

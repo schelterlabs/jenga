@@ -29,28 +29,35 @@ class IncomeEstimationTask(BinaryClassificationTask):
         test_data = test_split[columns]
         test_labels = np.array(test_split['class'] == '>50K')
 
-        BinaryClassificationTask.__init__(self,
-                                          seed,
-                                          train_data,
-                                          train_labels,
-                                          test_data,
-                                          test_labels,
-                                          categorical_columns=['workclass', 'occupation', 'marital_status',
-                                                               'education'],
-                                          numerical_columns=['hours_per_week', 'age']
-                                          )
+        super().__init__(
+            seed,
+            train_data,
+            train_labels,
+            test_data,
+            test_labels,
+            categorical_columns=[
+                'workclass',
+                'occupation',
+                'marital_status',
+                'education'
+            ],
+            numerical_columns=['hours_per_week', 'age']
+        )
 
     def fit_baseline_model(self, train_data, train_labels):
 
-        mark_missing_and_encode = Pipeline([
-            ('mark_missing', SimpleImputer(strategy='constant', fill_value='__NA__')),
-            ('one_hot_encode', OneHotEncoder(handle_unknown='ignore'))
-        ])
+        mark_missing_and_encode = Pipeline(
+            [
+                ('mark_missing', SimpleImputer(strategy='constant', fill_value='__NA__')),
+                ('one_hot_encode', OneHotEncoder(handle_unknown='ignore'))
+            ]
+        )
 
         feature_transformation = ColumnTransformer(transformers=[
-            ('categorical_features', mark_missing_and_encode, self.categorical_columns),
-            ('scaled_numeric', StandardScaler(), self.numerical_columns)
-        ])
+                ('categorical_features', mark_missing_and_encode, self.categorical_columns),
+                ('scaled_numeric', StandardScaler(), self.numerical_columns)
+            ]
+        )
 
         param_grid = {
             'learner__loss': ['log'],
@@ -58,9 +65,12 @@ class IncomeEstimationTask(BinaryClassificationTask):
             'learner__alpha': [0.0001, 0.001, 0.01, 0.1]
         }
 
-        pipeline = Pipeline([
-            ('features', feature_transformation),
-            ('learner', SGDClassifier(max_iter=1000))])
+        pipeline = Pipeline(
+            [
+                ('features', feature_transformation),
+                ('learner', SGDClassifier(max_iter=1000))
+            ]
+        )
 
         search = GridSearchCV(pipeline, param_grid, scoring='roc_auc', cv=5, verbose=1, n_jobs=-1)
         model = search.fit(train_data, train_labels)

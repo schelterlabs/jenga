@@ -30,21 +30,23 @@ class MissingValues(TabularCorruption):
 # Missing Values based on the records' "difficulty" for the model
 class MissingValuesBasedOnEntropy(DataCorruption):
 
-    def __init__(self,
-                 column,
-                 fraction,
-                 most_confident,
-                 model,
-                 data_to_predict_on,
-                 na_value
-                 ):
+    def __init__(
+        self,
+        column,
+        fraction,
+        most_confident,
+        model,
+        data_to_predict_on,
+        na_value
+    ):
         self.column = column
         self.fraction = fraction
         self.most_confident = most_confident
         self.model = model
         self.data_to_predict_on = data_to_predict_on
         self.na_value = na_value
-        DataCorruption.__init__(self)
+
+        super().__init__()
 
     def transform(self, data):
         df = data.copy(deep=True)
@@ -54,6 +56,7 @@ class MissingValuesBasedOnEntropy(DataCorruption):
 
         if self.most_confident:
             affected = probas.max(axis=1).argsort()[:cutoff]
+
         else:
             # for samples with the smallest maximum probability the model is most uncertain
             affected = probas.max(axis=1).argsort()[-cutoff:]
@@ -68,7 +71,7 @@ class MissingValuesBasedOnEntropy(DataCorruption):
 class SwappedValues(TabularCorruption):
 
     def __init__(self, column, fraction, sampling='CAR', swap_with=None):
-        TabularCorruption.__init__(self, column, fraction, sampling)
+        super().__init__(column, fraction, sampling)
         self.swap_with = swap_with
 
     def transform(self, data):
@@ -90,9 +93,11 @@ class CategoricalShift(TabularCorruption):
         df = data.copy(deep=True)
         rows = self.sample_rows(df)
         numeric_cols, non_numeric_cols = self.get_dtype(df)
+
         if self.column in numeric_cols:
             print('CategoricalShift implemented only for categorical variables')
             return df
+            
         else:
             histogram = df[self.column].value_counts()
             random_other_val = np.random.permutation(histogram.index)

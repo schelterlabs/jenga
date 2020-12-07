@@ -10,17 +10,18 @@ from sklearn.metrics import roc_auc_score
 # Base class for binary classification tasks, including training data, test data, a baseline model and scoring
 class BinaryClassificationTask(ABC):
 
-    def __init__(self,
-                 seed,
-                 train_data,
-                 train_labels,
-                 test_data,
-                 test_labels,
-                 categorical_columns=None,
-                 numerical_columns=None,
-                 text_columns=None,
-                 is_image_data=False
-                 ):
+    def __init__(
+        self,
+        seed,
+        train_data,
+        train_labels,
+        test_data,
+        test_labels,
+        categorical_columns=None,
+        numerical_columns=None,
+        text_columns=None,
+        is_image_data=False
+    ):
 
         if numerical_columns is None:
             numerical_columns = []
@@ -109,6 +110,6 @@ class TabularCorruption(DataCorruption):
                 rows = data[depends_on_col].sort_values().iloc[perc_idx].index
 
         else:
-            ValueError('sampling type not recognized')
+            ValueError(f"sampling type '{self.sampling}' not recognized")
 
         return rows

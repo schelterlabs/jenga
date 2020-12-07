@@ -14,7 +14,7 @@ class PreprocessingDecorator:
     def predict_proba(self, images):
         normalized_images = images.astype('float32') / 255
         reshaped_images = normalized_images.reshape(images.shape[0], 28, 28, 1)
-        return self.model.predict_proba(reshaped_images)
+        return self.model.predict(reshaped_images)
 
 
 # Distinguish images of "ankle boots" from images of "sneakers"
@@ -41,13 +41,11 @@ class ShoeCategorizationTask(BinaryClassificationTask):
         test_labels = np.where(test_labels == ankle_boot_id, 1, test_labels)
         test_labels = np.where(test_labels == sneaker_id, 0, test_labels)
 
-        BinaryClassificationTask.__init__(self, seed,  train_data, train_labels, test_data, test_labels,
-                                          is_image_data=True)
+        super().__init__(seed,  train_data, train_labels, test_data, test_labels, is_image_data=True)
 
     def fit_baseline_model(self, images, labels):
         model = tf.keras.Sequential()
-        model.add(tf.keras.layers.Conv2D(filters=64, kernel_size=2, padding='same', activation='relu',
-                                         input_shape=(28, 28, 1)))
+        model.add(tf.keras.layers.Conv2D(filters=64, kernel_size=2, padding='same', activation='relu', input_shape=(28, 28, 1)))
         model.add(tf.keras.layers.MaxPooling2D(pool_size=2))
         model.add(tf.keras.layers.Dropout(0.3))
         model.add(tf.keras.layers.Conv2D(filters=32, kernel_size=2, padding='same', activation='relu'))
@@ -58,9 +56,7 @@ class ShoeCategorizationTask(BinaryClassificationTask):
         model.add(tf.keras.layers.Dropout(0.5))
         model.add(tf.keras.layers.Dense(2, activation='softmax'))
 
-        model.compile(loss='categorical_crossentropy',
-                      optimizer='adam',
-                      metrics=['accuracy'])
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
         normalized_images = images.astype('float32') / 255
         reshaped_images = normalized_images.reshape(images.shape[0], 28, 28, 1)

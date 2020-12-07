@@ -35,9 +35,11 @@ class SchemaStresstest:
             p_categorical_column_affected = float(len(task.categorical_columns)) / num_columns
             p_text_column_affected = float(len(task.text_columns)) / num_columns
 
-            affected_column_type = np.random.choice(['numerical', 'categorical', 'text'], 1,
-                                                    p=[p_numerical_column_affected, p_categorical_column_affected,
-                                                       p_text_column_affected])
+            affected_column_type = np.random.choice(
+                ['numerical', 'categorical', 'text'],
+                1,
+                p=[p_numerical_column_affected, p_categorical_column_affected, p_text_column_affected]
+            )
 
             fraction = float(np.random.randint(100)) / 100
 
@@ -53,11 +55,12 @@ class SchemaStresstest:
                     if corruption_type == 'missing':
                         missingness = np.random.choice(['MCAR', 'MAR', 'MNAR'])
                         affected_column = np.random.choice(task.numerical_columns)
-                        random_corruptions.add(MissingValues(affected_column, fraction, na_value=np.nan,
-                                                             missingness=missingness))
+                        random_corruptions.add(MissingValues(affected_column, fraction, na_value=np.nan, missingness=missingness))
+
                     elif corruption_type == 'noise':
                         affected_column = np.random.choice(task.numerical_columns)
                         random_corruptions.add(GaussianNoise(affected_column, fraction))
+
                     elif corruption_type == 'scaling':
                         affected_column = np.random.choice(task.numerical_columns)
                         random_corruptions.add(Scaling(affected_column, fraction))
@@ -67,14 +70,14 @@ class SchemaStresstest:
                 if len(task.categorical_columns) >= 2 and np.random.uniform() < 0.1:
                     affected_columns = np.random.choice(task.categorical_columns, 2)
                     random_corruptions.add(SwappedValues(affected_columns[0], swap_with=affected_columns[1], fraction=fraction))
+
                 else:
                     corruption_type = np.random.choice(['missing', 'encoding'])
 
                     if corruption_type == 'missing':
                         missingness = np.random.choice(['MCAR', 'MAR', 'MNAR'])
                         affected_column = np.random.choice(task.categorical_columns)
-                        random_corruptions.add(MissingValues(affected_column, fraction, na_value='',
-                                                             missingness=missingness))
+                        random_corruptions.add(MissingValues(affected_column, fraction, na_value='', missingness=missingness))
 
                     elif corruption_type == 'encoding':
                         affected_column = np.random.choice(task.categorical_columns)
@@ -85,14 +88,14 @@ class SchemaStresstest:
                 if len(task.text_columns) >= 2 and np.random.uniform() < 0.1:
                     affected_columns = np.random.choice(task.text_columns, 2)
                     random_corruptions.add(SwappedValues(affected_columns[0], swap_with=affected_columns[1], fraction=fraction))
+
                 else:
                     corruption_type = np.random.choice(['missing', 'encoding'])
 
                     if corruption_type == 'missing':
                         missingness = np.random.choice(['MCAR', 'MAR', 'MNAR'])
                         affected_column = np.random.choice(task.text_columns)
-                        random_corruptions.add(MissingValues(affected_column, fraction, na_value='',
-                                                             missingness=missingness))
+                        random_corruptions.add(MissingValues(affected_column, fraction, na_value='', missingness=missingness))
 
                     elif corruption_type == 'encoding':
                         affected_column = np.random.choice(task.text_columns)
@@ -123,20 +126,25 @@ class SchemaStresstest:
                 performance_drop = (baseline_score - corrupted_score) / baseline_score
 
                 has_negative_impact = performance_drop > performance_threshold
-            except:
+
+            except Exception as err:
                 corrupted_score = None
                 has_negative_impact = True
+                print(f"Raised error: {err}")
 
             has_anomalies = len(tfdv_anomalies.anomaly_info) != 0
 
             if has_anomalies:
                 if has_negative_impact:
                     status = 'TP'
+
                 else:
                     status = 'FP'
+
             else:
                 if not has_negative_impact:
                     status = 'TN'
+
                 else:
                     status = 'FN'
 

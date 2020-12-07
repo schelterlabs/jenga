@@ -10,7 +10,7 @@ class BrokenCharacters(DataCorruption):
     def __init__(self, column, fraction):
         self.column = column
         self.fraction = fraction
-        DataCorruption.__init__(self)
+        super().__init__()
 
     def transform(self, data):
         corrupted_data = data.copy(deep=True)
@@ -29,8 +29,10 @@ class BrokenCharacters(DataCorruption):
         for index, row in corrupted_data.iterrows():
             if random.random() < self.fraction:
                 column_value = row[self.column]
+
                 for character, replacement in replacements.items():
                     column_value = str(column_value).replace(character, replacement)
+
                 corrupted_data.at[index, self.column] = column_value
 
         return corrupted_data
