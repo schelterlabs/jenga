@@ -97,16 +97,17 @@ class TabularCorruption(DataCorruption):
             perc_lower_start = np.random.randint(0, len(data) - n_values_to_discard)
             perc_idx = range(perc_lower_start, perc_lower_start + n_values_to_discard)
 
+            # Not At Random
+            if self.sampling.endswith('NAR'):
+                # pick a random percentile of values in this column
+                rows = data[self.column].sort_values().iloc[perc_idx].index
+
             # At Random
-            if self.sampling.endswith('AR'):
+            elif self.sampling.endswith('AR'):
                 depends_on_col = np.random.choice(list(set(data.columns) - {self.column}))
                 # pick a random percentile of values in other column
                 rows = data[depends_on_col].sort_values().iloc[perc_idx].index
 
-            # Not At Random
-            elif self.sampling.endswith('NAR'):
-                # pick a random percentile of values in this column
-                rows = data[self.column].sort_values().iloc[perc_idx].index
         else:
             ValueError('sampling type not recognized')
 
