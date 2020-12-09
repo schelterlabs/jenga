@@ -21,7 +21,9 @@ class OpenMLTask(BinaryClassificationTask):
         self.openml_id = openml_id
         X, y = fetch_openml(data_id=self.openml_id, as_frame=True, return_X_y=True)
 
-        categorical_columns, numeric_columns = self._guess_dtypes(X)
+        self.__contains_missing_values = X.isnull().values.any()  # TODO: does this work in all cases?
+
+        categorical_columns, numeric_columns, text_columns = self._guess_dtypes(X)
         print(f'Found {len(categorical_columns)} categorical columns: {categorical_columns}')
         print(f'Found {len(numeric_columns)} numeric columns: {numeric_columns}')
 
@@ -34,7 +36,8 @@ class OpenMLTask(BinaryClassificationTask):
             test_data,
             test_labels,
             categorical_columns=categorical_columns,
-            numerical_columns=numeric_columns
+            numerical_columns=numeric_columns,
+            text_columns=text_columns
         )
 
     def _is_categorical(self, col, max_unique_ratio=0.05):
@@ -44,7 +47,11 @@ class OpenMLTask(BinaryClassificationTask):
     def _guess_dtypes(self, df):
         categorical_columns = [c for c in df.columns if self._is_categorical(df[c])]
         numeric_columns = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c]) and c not in categorical_columns]
-        return categorical_columns, numeric_columns
+        text_columns = [c for c in df.columns if pd.api.types.is_string_dtype(df[c]) and c not in categorical_columns and c not in numeric_columns]
+        return categorical_columns, numeric_columns, text_columns
+
+    def contains_missing_values(self) -> bool:
+        return self.__contains_missing_values
 
     def fit_baseline_model(self, train_data, train_labels):
 

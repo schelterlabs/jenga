@@ -97,7 +97,7 @@ class CategoricalShift(TabularCorruption):
         if self.column in numeric_cols:
             print('CategoricalShift implemented only for categorical variables')
             return df
-            
+
         else:
             histogram = df[self.column].value_counts()
             random_other_val = np.random.permutation(histogram.index)
