@@ -1,96 +1,82 @@
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.datasets import fetch_openml
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import SGDClassifier
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.metrics import make_scorer, roc_auc_score, f1_score, mean_squared_error, mean_absolute_error
 
-from jenga.basis import BinaryClassificationTask
+from typing import Tuple, Dict, List, Union, Callable, Any
 
-# some binary classification tasks from
-# https://www.openml.org/search?q=qualities.NumberOfClasses%3A2%2520qualities.NumberOfInstances%3Alt%3B10000%2520qualities.NumberOfFeatures%3Alt%3B100&type=data
-OPENML_IDS = [1448, 40994]
+from jenga.basis import BinaryClassificationTask, MultiLabelClassificationTask, RegressionTask
 
 
-# Predict whether a person has high or low income based on demographic and financial attributes
-class OpenMLTask(BinaryClassificationTask):
+class OpenMLRegressionTask(RegressionTask):
 
-    def __init__(self, seed=0, openml_id=1448):
-        self.openml_id = openml_id
-        X, y = fetch_openml(data_id=self.openml_id, as_frame=True, return_X_y=True)
-
-        self.__contains_missing_values = X.isnull().values.any()  # TODO: does this work in all cases?
-
-        categorical_columns, numeric_columns, text_columns = self._guess_dtypes(X)
-        print(f'Found {len(categorical_columns)} categorical columns: {categorical_columns}')
-        print(f'Found {len(numeric_columns)} numeric columns: {numeric_columns}')
-
-        train_data, test_data, train_labels, test_labels = train_test_split(X, y, test_size=0.2)
-
-        super().__init__(
-            seed,
-            train_data,
-            train_labels,
-            test_data,
-            test_labels,
-            categorical_columns=categorical_columns,
-            numerical_columns=numeric_columns,
-            text_columns=text_columns
-        )
-
-    def _is_categorical(self, col, max_unique_ratio=0.05):
-        # return len(col.value_counts()) / len(col) < max_unique_ratio
-        return pd.api.types.is_categorical_dtype(col)
-
-    def _guess_dtypes(self, df):
-        categorical_columns = [c for c in df.columns if self._is_categorical(df[c])]
-        numeric_columns = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c]) and c not in categorical_columns]
-        text_columns = [c for c in df.columns if pd.api.types.is_string_dtype(df[c]) and c not in categorical_columns and c not in numeric_columns]
-        return categorical_columns, numeric_columns, text_columns
-
-    def contains_missing_values(self) -> bool:
-        return self.__contains_missing_values
-
-    def fit_baseline_model(self, train_data, train_labels):
-
-        for col in self.categorical_columns:
-            train_data[col] = train_data[col].astype(str)
-
-        categorical_preprocessing = Pipeline(
-            [
-                ('mark_missing', SimpleImputer(strategy='constant', fill_value='__NA__')),
-                ('one_hot_encode', OneHotEncoder(handle_unknown='ignore'))
-            ]
-        )
-
-        numeric_preprocessing = Pipeline(
-            [
-                ('mark_missing', SimpleImputer(strategy='constant', fill_value=0)),
-                ('scaling',  StandardScaler())
-            ]
-        )
-
-        feature_transformation = ColumnTransformer(transformers=[
-                ('categorical_features', categorical_preprocessing, self.categorical_columns),
-                ('scaled_numeric', numeric_preprocessing, self.numerical_columns)
-            ]
-        )
+    def _get_pipeline_grid_scorer(self, feature_transformation: ColumnTransformer) -> Tuple[Dict[str, List[Union[str, float]]], Pipeline, Dict[str, Callable[..., Any]]]:
 
         param_grid = {
-            'learner__loss': ['log'],
+            'learner__loss': ['squared_loss', 'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive'],
+            'learner__penalty': ['l2', 'l1', 'elasticnet'],
             'learner__alpha': [0.0001, 0.001, 0.01]
         }
 
         pipeline = Pipeline(
             [
                 ('features', feature_transformation),
-                ('learner', SGDClassifier(max_iter=1000))
+                ('learner', SGDRegressor(max_iter=1000))
             ]
         )
 
-        search = GridSearchCV(pipeline, param_grid, scoring='roc_auc', cv=5, verbose=1, n_jobs=-1)
-        model = search.fit(train_data, train_labels)
+        scorer = {
+            "MSE": make_scorer(mean_squared_error, greater_is_better=False),
+            "MAE": make_scorer(mean_absolute_error, greater_is_better=False)
+        }
 
-        return model
+        return param_grid, pipeline, scorer
+
+
+class OpenMLMultiLabelClassificationTask(MultiLabelClassificationTask):
+
+    def _get_pipeline_grid_scorer(self, feature_transformation: ColumnTransformer) -> Tuple[Dict[str, List[Union[str, float]]], Pipeline, Dict[str, Callable[..., Any]]]:
+
+        param_grid = {
+            'learner__loss': ['hinge', 'log', 'modified_huber', 'squared_hinge'],
+            'learner__penalty': ['l2', 'l1', 'elasticnet'],
+            'learner__alpha': [0.0001, 0.001, 0.01]
+        }
+
+        pipeline = Pipeline(
+            [
+                ('features', feature_transformation),
+                ('learner', SGDClassifier(max_iter=1000, n_jobs=-1))
+            ]
+        )
+
+        scorer = {
+            "F1": make_scorer(f1_score, average="macro")
+        }
+
+        return param_grid, pipeline, scorer
+
+
+class OpenMLBinaryClassificationTask(BinaryClassificationTask):
+
+    def _get_pipeline_grid_scorer(self, feature_transformation: ColumnTransformer) -> Tuple[Dict[str, List[Union[str, float]]], Pipeline, Dict[str, Callable[..., Any]]]:
+
+        param_grid = {
+            'learner__loss': ['hinge', 'log', 'modified_huber', 'squared_hinge'],
+            'learner__penalty': ['l2', 'l1', 'elasticnet'],
+            'learner__alpha': [0.0001, 0.001, 0.01]
+        }
+
+        pipeline = Pipeline(
+            [
+                ('features', feature_transformation),
+                ('learner', SGDClassifier(max_iter=1000, n_jobs=-1))
+            ]
+        )
+
+        scorer = {
+            "ROC/AUC": make_scorer(roc_auc_score, needs_proba=True)
+        }
+
+        return param_grid, pipeline, scorer
