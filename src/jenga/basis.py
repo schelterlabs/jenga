@@ -18,7 +18,7 @@ from typing import Tuple, Dict, List, Union, Callable, Any
 
 
 class OpenMLTask(ABC):
-    def __init__(self, openml_id: int, seed: Optional[int] = 42):
+    def __init__(self, openml_id: int, seed: Optional[int] = None):
 
         self._seed = seed
         self._openml_id = openml_id
@@ -135,7 +135,7 @@ class ClassificationTask(OpenMLTask):
         self,
         openml_id: int,
         is_image_data: bool = False,
-        seed: Optional[int] = 42
+        seed: Optional[int] = None
     ):
         super().__init__(openml_id=openml_id, seed=seed)
 
