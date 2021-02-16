@@ -3,20 +3,22 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python>=3.6
+  - python
   - pip
   - numpy
   - scipy
   - pandas
   - matplotlib
-  - seaborn
   - scikit-learn
+  - tensorflow
   - pip:
       # add here only pip-packages that are not available in conda/conda-forge! E.g.:
-      - tensorflow
       - tensorflow-data-validation
       - keras
       - imgaug
+      - imagecorruptions
+      - flake8
+      - flake8-mypy
   # for development only (could also be kept in a separate environment file)
   - jupyterlab
   - pytest
@@ -24,7 +26,6 @@ dependencies:
   - tox
   - pre_commit
   - nbdime
-  - nbstripout
   - sphinx
   - recommonmark
   - pylint
