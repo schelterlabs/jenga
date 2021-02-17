@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import f1_score, mean_squared_error, roc_auc_score
@@ -28,6 +29,25 @@ class Task(ABC):
         is_image_data: bool = False,
         seed: Optional[int] = None
     ):
+        """
+        Abstract base class for all Tasks. It defines the interface and a fair amount of functionality, \
+            such as fitting a baseline model, inherited to child classes.
+        If `is_image_data = False` it forces the `train_labels` and `test_labels` to be of a proper type:
+            - `categorical_dtype` for classification task
+            - `numeric_dtype` for regression task
+
+        Args:
+            train_data (pd.DataFrame): Training data
+            train_labels (pd.Series): Training labels
+            test_data (pd.DataFrame): Test data
+            test_labels (pd.Series): Test labels
+            categorical_columns (List[str], optional): List of categorical column names. Defaults to [].
+            numerical_columns (List[str], optional): List of numerical column names. Defaults to [].
+            text_columns (List[str], optional): List of text column names. Defaults to [].
+            is_image_data (bool, optional): Indicates whether data are images. Defaults to False.
+            seed (Optional[int], optional): Seed for determinism. Defaults to None.
+        """
+
         self._baseline_model = None
         self._task_type: Optional[int] = None
 
@@ -48,6 +68,12 @@ class Task(ABC):
             tf.random.set_seed(self._seed)
 
     def _get_task_type_of_data(self) -> Optional[int]:
+        """
+        Helper method to check the given label's task type (classification/multi-class/regression).
+
+        Returns:
+            Optional[int]: Integer encoded task type
+        """
 
         task_type = None
 
@@ -68,7 +94,21 @@ class Task(ABC):
 
         return task_type
 
-    def fit_baseline_model(self, train_data: Optional[pd.DataFrame] = None, train_labels: Optional[pd.Series] = None):
+    def fit_baseline_model(self, train_data: Optional[pd.DataFrame] = None, train_labels: Optional[pd.Series] = None) -> BaseEstimator:
+        """
+        Fit a baseline model. If no data is given (default), it uses the task's train data and creates the attribute `_baseline_model`. \
+            If data is given, it trains this data.
+
+        Args:
+            train_data (Optional[pd.DataFrame], optional): Data to train. Defaults to None.
+            train_labels (Optional[pd.Series], optional): Labels to train. Defaults to None.
+
+        Raises:
+            ValueError: If `train_data` is given but `train_labels` not or vice versa
+
+        Returns:
+            BaseEstimator: Trained model
+        """
 
         if (train_data is None and train_labels is not None) or (train_data is not None and train_labels is None):
             raise ValueError("either set both parameters (train_data, train_labels) or non")
@@ -116,22 +156,61 @@ class Task(ABC):
 
     @abstractmethod
     def _check_data(self):
+        """
+        Forces child class to implement data checking.
+
+        Raises:
+            Exception: If child class does not set the attribute `_task_type`
+        """
+
+        # TODO: maybe we also want to check whether all the column names exist in the dataframe
 
         if self._task_type is None:
             raise Exception("Class attribute '_task_type' is not set!")
 
     @abstractmethod
     def get_baseline_performance(self) -> float:
+        """
+        Forces child class to implement baseline performance metric.
+
+        Raises:
+            Exception: If no baseline model is trained yet
+
+        Returns:
+            float: Baseline performance on test data
+        """
 
         if not self._baseline_model:
             raise Exception("First fit a baseline model")
 
     @abstractmethod
     def score_on_test_data(self, predictions: pd.array) -> float:
+        """
+        Forces child class to implement scoring of given `predictions` against test data.
+
+        Args:
+            predictions (pd.array): Either 1-D array if models `predict` method used or n-D array for `predict_proba`, \
+                where n is the number of classes
+
+        Returns:
+            float: Score of given `predictions`
+        """
+
         pass
 
     @abstractmethod
     def _get_pipeline_grid_scorer_tuple(self, feature_transformation: ColumnTransformer) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
+        """
+        Forces child class to define task specific `Pipeline`, hyperparameter grid for HPO, and scorer for baseline model training.
+        This helps to reduce redundant code.
+
+        Args:
+            feature_transformation (ColumnTransformer): Basic preprocessing for columns. Given by `fit_baseline_model` that calls this method
+
+        Returns:
+            Tuple[Dict[str, object], Any, Dict[str, Any]]: Task specific parts to build baseline model
+        """
+
         pass
 
 
