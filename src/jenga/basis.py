@@ -1,28 +1,45 @@
 import random
-from typing import Optional
 from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.metrics import roc_auc_score, f1_score, mean_squared_error, mean_absolute_error
-from sklearn.datasets import fetch_openml
-from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import GridSearchCV
 from sklearn.impute import SimpleImputer
+from sklearn.metrics import f1_score, mean_squared_error, roc_auc_score
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from typing import Tuple, Dict, List, Union, Callable, Any
+from .utils import BINARY_CLASSIFICATION, MULTI_CLASS_CLASSIFICATION, REGRESSION
 
 
-class OpenMLTask(ABC):
-    def __init__(self, openml_id: int, seed: Optional[int] = None):
-
-        self._seed = seed
-        self._openml_id = openml_id
+class Task(ABC):
+    def __init__(
+        self,
+        train_data: pd.DataFrame,
+        train_labels: pd.Series,
+        test_data: pd.DataFrame,
+        test_labels: pd.Series,
+        categorical_columns: List[str] = [],
+        numerical_columns: List[str] = [],
+        text_columns: List[str] = [],
+        is_image_data: bool = False,
+        seed: Optional[int] = None
+    ):
         self._baseline_model = None
+        self._task_type: Optional[int] = None
+
+        self.train_data = train_data
+        self.train_labels = train_labels
+        self.test_data = test_data
+        self.test_labels = test_labels
+        self.categorical_columns = categorical_columns
+        self.numerical_columns = numerical_columns
+        self.text_columns = text_columns
+        self.is_image_data = is_image_data
+        self._seed = seed
 
         # Fix random seeds for reproducibility
         if self._seed:
@@ -30,53 +47,37 @@ class OpenMLTask(ABC):
             np.random.seed(self._seed)
             tf.random.set_seed(self._seed)
 
-        X, y = fetch_openml(data_id=self._openml_id, as_frame=True, return_X_y=True)
-
-        self.__contains_missing_values = X.isnull().values.any()  # TODO: does this work in all cases?
-
-        self.categorical_columns, self.numerical_columns, self.text_columns = self._guess_dtypes(X)
-        print(f'Found {len(self.categorical_columns)} categorical columns: {self.categorical_columns}')
-        print(f'Found {len(self.numerical_columns)} numeric columns: {self.numerical_columns}')
-
-        self.train_data, self.test_data, self.train_labels, self.test_labels = train_test_split(X, y, test_size=0.2)
-
-        self._check_data()
-
-    def _is_categorical(self, col, max_unique_ratio=0.05):
-        # return len(col.value_counts()) / len(col) < max_unique_ratio
-        return pd.api.types.is_categorical_dtype(col)
-
-    def _guess_dtypes(self, df):
-        categorical_columns = [c for c in df.columns if self._is_categorical(df[c])]
-        numeric_columns = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c]) and c not in categorical_columns]
-        text_columns = [c for c in df.columns if pd.api.types.is_string_dtype(df[c]) and c not in categorical_columns and c not in numeric_columns]
-
-        return categorical_columns, numeric_columns, text_columns
-
-    def _get_task_type(self) -> Optional[str]:
+    def _get_task_type_of_data(self) -> Optional[int]:
 
         task_type = None
 
-        if pd.api.types.is_numeric_dtype(self.train_labels):
-            task_type = "regression"
+        if pd.api.types.is_numeric_dtype(self.train_labels) and pd.api.types.is_numeric_dtype(self.test_labels):
+            task_type = REGRESSION
 
-        elif pd.api.types.is_categorical_dtype(self.train_labels):
-            num_classes = len(self.train_labels.dtype.categories)
+        elif pd.api.types.is_categorical_dtype(self.train_labels) and pd.api.types.is_categorical_dtype(self.test_labels):
+            num_test_classes = len(self.test_labels.dtype.categories)
+            num_train_classes = len(self.train_labels.dtype.categories)
 
-            if num_classes == 2:
-                task_type = "binary classification"
+            if num_test_classes == num_train_classes:
 
-            elif num_classes > 2:
-                task_type = "multilabel classification"
+                if num_test_classes == 2:
+                    task_type = BINARY_CLASSIFICATION
+
+                elif num_test_classes > 2:
+                    task_type = MULTI_CLASS_CLASSIFICATION
 
         return task_type
 
-    def contains_missing_values(self) -> bool:
-        return self.__contains_missing_values
+    def fit_baseline_model(self, train_data: Optional[pd.DataFrame] = None, train_labels: Optional[pd.Series] = None):
 
-    def fit_baseline_model(self):
-        train_data = self.train_data.copy()
-        train_labels = self.train_labels.copy()
+        if (train_data is None and train_labels is not None) or (train_data is not None and train_labels is None):
+            raise ValueError("either set both parameters (train_data, train_labels) or non")
+
+        use_original_data = train_data is None
+
+        if use_original_data:
+            train_data = self.train_data
+            train_labels = self.train_labels
 
         for col in self.categorical_columns:
             train_data[col] = train_data[col].astype(str)
@@ -101,115 +102,175 @@ class OpenMLTask(ABC):
             ]
         )
 
-        param_grid, pipeline, scorer = self._get_pipeline_grid_scorer(feature_transformation)
+        param_grid, pipeline, scorer = self._get_pipeline_grid_scorer_tuple(feature_transformation)
         refit = list(scorer.keys())[0]
 
         search = GridSearchCV(pipeline, param_grid, scoring=scorer, n_jobs=-1, refit=refit)
-        self._baseline_model = search.fit(train_data, train_labels).best_estimator_
+        model = search.fit(train_data, train_labels).best_estimator_
 
-        return self._baseline_model
+        # only set baseline model attribute if it is trained on the original task data
+        if use_original_data:
+            self._baseline_model = model
 
-    # Check whether data fits the expected form, if not raise error
+        return model
+
     @abstractmethod
     def _check_data(self):
-        pass
 
-    # Abstract base method for calculating scores
+        if self._task_type is None:
+            raise Exception("Class attribute '_task_type' is not set!")
+
     @abstractmethod
-    def score_on_test_data(self):
+    def get_baseline_performance(self) -> float:
 
         if not self._baseline_model:
             raise Exception("First fit a baseline model")
 
     @abstractmethod
-    def _get_pipeline_grid_scorer(
-        self,
-        feature_transformation: ColumnTransformer
-    ) -> Tuple[Dict[str, List[Union[str, float]]], Pipeline, Dict[str, Callable[..., Any]]]:
+    def score_on_test_data(self, predictions: pd.array) -> float:
+        pass
+
+    @abstractmethod
+    def _get_pipeline_grid_scorer_tuple(self, feature_transformation: ColumnTransformer) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
         pass
 
 
-class ClassificationTask(OpenMLTask):
+class BinaryClassificationTask(Task):
 
     def __init__(
         self,
-        openml_id: int,
+        train_data: pd.DataFrame,
+        train_labels: pd.Series,
+        test_data: pd.DataFrame,
+        test_labels: pd.Series,
+        categorical_columns: List[str] = [],
+        numerical_columns: List[str] = [],
+        text_columns: List[str] = [],
         is_image_data: bool = False,
         seed: Optional[int] = None
     ):
-        super().__init__(openml_id=openml_id, seed=seed)
+        super().__init__(
+            train_data=train_data,
+            train_labels=train_labels,
+            test_data=test_data,
+            test_labels=test_labels,
+            categorical_columns=categorical_columns,
+            numerical_columns=numerical_columns,
+            text_columns=text_columns,
+            is_image_data=is_image_data,
+            seed=seed
+        )
 
-        self.is_image_data = is_image_data
-
-
-class BinaryClassificationTask(ClassificationTask):
+        self._task_type = BINARY_CLASSIFICATION
+        self._check_data()
 
     def _check_data(self):
-        if self._get_task_type() != "binary classification":
+        super()._check_data()
+
+        if self._get_task_type_of_data() != BINARY_CLASSIFICATION and not self.is_image_data:
             raise ValueError("Downloaded data is not a binary classification task.")
 
-    def score_on_test_data(self):
+    def get_baseline_performance(self) -> float:
 
-        super().score_on_test_data()
+        super().get_baseline_performance()
 
-        f1_test_score = roc_test_score = None
+        predicted_label_probabilities = self._baseline_model.predict_proba(self.test_data)
+        return self.score_on_test_data(predicted_label_probabilities)
 
-        if hasattr(self._baseline_model, "predict_proba"):
-            predicted_label_probabilities = self._baseline_model.predict_proba(self.test_data)
-            roc_test_score = roc_auc_score(self.test_labels, predicted_label_probabilities[:, 1])
-
-        predictions = self._baseline_model.predict(self.test_data)
-        f1_test_score = f1_score(self.test_labels, predictions, average="macro")
-
-        return {"ROC/AUC": roc_test_score, "F1": f1_test_score}
+    def score_on_test_data(self, predictions: pd.array) -> float:
+        return roc_auc_score(self.test_labels, predictions[:, 1])
 
 
-class MultiLabelClassificationTask(ClassificationTask):
+class MultiClassClassificationTask(Task):
 
-    def _check_data(self):
-        if self._get_task_type() != "multilabel classification":
-            raise ValueError("Downloaded data is not a multi-label classification task.")
+    def __init__(
+        self,
+        train_data: pd.DataFrame,
+        train_labels: pd.Series,
+        test_data: pd.DataFrame,
+        test_labels: pd.Series,
+        categorical_columns: List[str] = [],
+        numerical_columns: List[str] = [],
+        text_columns: List[str] = [],
+        is_image_data: bool = False,
+        seed: Optional[int] = None
+    ):
+        super().__init__(
+            train_data=train_data,
+            train_labels=train_labels,
+            test_data=test_data,
+            test_labels=test_labels,
+            categorical_columns=categorical_columns,
+            numerical_columns=numerical_columns,
+            text_columns=text_columns,
+            is_image_data=is_image_data,
+            seed=seed
+        )
 
-    def score_on_test_data(self):
-
-        super().score_on_test_data()
-
-        f1_test_score = roc_test_score = None
-
-        if hasattr(self._baseline_model, "predict_proba"):
-            # NOTE: ROC/AUC score is problematic for many classes with just a few samples per class
-            # it only works if for each class at least one examples exists. Due to sampling the probability fo causing an error
-            # is very high, so catching this
-            try:
-                predicted_label_probabilities = self._baseline_model.predict_proba(self.test_data)
-                roc_test_score = roc_auc_score(self.test_labels, predicted_label_probabilities, multi_class="ovo")
-
-            except ValueError:
-                pass
-
-        predictions = self._baseline_model.predict(self.test_data)
-        f1_test_score = f1_score(self.test_labels, predictions, average="macro")
-
-        return {"ROC/AUC": roc_test_score, "F1": f1_test_score}
-
-
-class RegressionTask(OpenMLTask):
+        self._task_type = MULTI_CLASS_CLASSIFICATION
+        self._check_data()
 
     def _check_data(self):
-        if self._get_task_type() != "regression":
+        super()._check_data()
+
+        if self._get_task_type_of_data() != MULTI_CLASS_CLASSIFICATION and not self.is_image_data:
+            raise ValueError("Downloaded data is not a multi-class classification task.")
+
+    def get_baseline_performance(self) -> float:
+
+        super().get_baseline_performance()
+
+        predictions = self._baseline_model.predict(self.test_data)
+        return self.score_on_test_data(predictions)
+
+    def score_on_test_data(self, predictions: pd.array) -> float:
+        return f1_score(self.test_labels, predictions, average="macro")
+
+
+class RegressionTask(Task):
+
+    def __init__(
+        self,
+        train_data: pd.DataFrame,
+        train_labels: pd.Series,
+        test_data: pd.DataFrame,
+        test_labels: pd.Series,
+        categorical_columns: List[str] = [],
+        numerical_columns: List[str] = [],
+        text_columns: List[str] = [],
+        is_image_data: bool = False,
+        seed: Optional[int] = None
+    ):
+        super().__init__(
+            train_data=train_data,
+            train_labels=train_labels,
+            test_data=test_data,
+            test_labels=test_labels,
+            categorical_columns=categorical_columns,
+            numerical_columns=numerical_columns,
+            text_columns=text_columns,
+            is_image_data=is_image_data,
+            seed=seed
+        )
+
+        self._task_type = REGRESSION
+        self._check_data()
+
+    def _check_data(self):
+        super()._check_data()
+
+        if self._get_task_type_of_data() != REGRESSION:
             raise ValueError("Downloaded data is not a regression task.")
 
-    def score_on_test_data(self):
+    def get_baseline_performance(self) -> float:
 
-        if not self._baseline_model:
-            raise Exception("First fit a baseline model")
+        super().get_baseline_performance()
 
         predictions = self._baseline_model.predict(self.test_data)
+        return self.score_on_test_data(predictions)
 
-        return {
-            "MSE": mean_squared_error(self.test_labels, predictions),
-            "MAE": mean_absolute_error(self.test_labels, predictions)
-        }
+    def score_on_test_data(self, predictions: pd.array) -> float:
+        return mean_squared_error(self.test_labels, predictions)
 
 
 # Abstract base class for all data corruptions
