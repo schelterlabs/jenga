@@ -1,13 +1,13 @@
-import numpy as np
+from typing import Any, Dict, Tuple
+
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
 from sklearn.linear_model import SGDClassifier
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.metrics import make_scorer, roc_auc_score
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from jenga.basis import BinaryClassificationTask
+from ..basis import BinaryClassificationTask
 
 
 # Predict whether a person has high or low income based on demographic and financial attributes
@@ -16,6 +16,9 @@ class IncomeEstimationTask(BinaryClassificationTask):
     def __init__(self, seed, ignore_incomplete_records_for_training=False):
 
         columns = ['workclass', 'occupation', 'marital_status', 'education', 'hours_per_week', 'age']
+        categorical_columns = ['workclass', 'occupation', 'marital_status', 'education']
+        numerical_columns = ['hours_per_week', 'age']
+
         all_data = pd.read_csv('../data/income/adult.csv', na_values='?')
 
         train_split, test_split = train_test_split(all_data, test_size=0.2)
@@ -24,40 +27,28 @@ class IncomeEstimationTask(BinaryClassificationTask):
             train_split = train_split.dropna()
 
         train_data = train_split[columns]
-        train_labels = np.array(train_split['class'] == '>50K')
+        train_labels = (train_split['class'] == '>50K').replace({True: 1, False: 0})
+        train_labels = train_labels.astype("category")
 
         test_data = test_split[columns]
-        test_labels = np.array(test_split['class'] == '>50K')
+        test_labels = (test_split['class'] == '>50K').replace({True: 1, False: 0})
+        test_labels = test_labels.astype("category")
 
         super().__init__(
-            seed,
-            train_data,
-            train_labels,
-            test_data,
-            test_labels,
-            categorical_columns=[
-                'workclass',
-                'occupation',
-                'marital_status',
-                'education'
-            ],
-            numerical_columns=['hours_per_week', 'age']
+            train_data=train_data,
+            train_labels=train_labels,
+            test_data=test_data,
+            test_labels=test_labels,
+            categorical_columns=categorical_columns,
+            numerical_columns=numerical_columns,
+            is_image_data=False,
+            seed=seed
         )
 
-    def fit_baseline_model(self, train_data, train_labels):
-
-        mark_missing_and_encode = Pipeline(
-            [
-                ('mark_missing', SimpleImputer(strategy='constant', fill_value='__NA__')),
-                ('one_hot_encode', OneHotEncoder(handle_unknown='ignore'))
-            ]
-        )
-
-        feature_transformation = ColumnTransformer(transformers=[
-                ('categorical_features', mark_missing_and_encode, self.categorical_columns),
-                ('scaled_numeric', StandardScaler(), self.numerical_columns)
-            ]
-        )
+    def _get_pipeline_grid_scorer_tuple(
+        self,
+        feature_transformation: ColumnTransformer
+    ) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
 
         param_grid = {
             'learner__loss': ['log'],
@@ -72,7 +63,8 @@ class IncomeEstimationTask(BinaryClassificationTask):
             ]
         )
 
-        search = GridSearchCV(pipeline, param_grid, scoring='roc_auc', cv=5, verbose=1, n_jobs=-1)
-        model = search.fit(train_data, train_labels)
+        scorer = {
+            "ROC/AUC": make_scorer(roc_auc_score, needs_proba=True)
+        }
 
-        return model
+        return param_grid, pipeline, scorer
