@@ -1,17 +1,61 @@
+from typing import Any, Dict, Optional, Tuple
+
 import pandas as pd
 from sklearn.compose import ColumnTransformer
+from sklearn.datasets import fetch_openml
 from sklearn.linear_model import SGDClassifier, SGDRegressor
+from sklearn.metrics import (
+    f1_score,
+    make_scorer,
+    mean_absolute_error,
+    mean_squared_error,
+    roc_auc_score
+)
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import make_scorer, roc_auc_score, f1_score, mean_squared_error, mean_absolute_error
 
-from typing import Tuple, Dict, List, Union, Callable, Any
+from ..basis import (
+    BinaryClassificationTask,
+    MultiClassClassificationTask,
+    RegressionTask,
+    Task
+)
 
-from jenga.basis import BinaryClassificationTask, MultiLabelClassificationTask, RegressionTask
+
+class OpenMLTask(Task):
+
+    def __init__(self, openml_id: int, train_size: float = 0.8, seed: Optional[int] = None):
+
+        X, y = fetch_openml(data_id=openml_id, as_frame=True, return_X_y=True)
+        train_data, test_data, train_labels, test_labels = train_test_split(X, y, train_size=train_size)
+
+        categorical_columns = [
+            column for column in X.columns
+            if pd.api.types.is_categorical_dtype(X[column])
+        ]
+        numerical_columns = [
+            column for column in X.columns
+            if pd.api.types.is_numeric_dtype(X[column]) and column not in categorical_columns
+        ]
+
+        super().__init__(
+            train_data=train_data,
+            train_labels=train_labels,
+            test_data=test_data,
+            test_labels=test_labels,
+            categorical_columns=categorical_columns,
+            numerical_columns=numerical_columns,
+            is_image_data=False,
+            seed=seed
+        )
 
 
-class OpenMLRegressionTask(RegressionTask):
+class OpenMLRegressionTask(OpenMLTask, RegressionTask):
 
-    def _get_pipeline_grid_scorer(self, feature_transformation: ColumnTransformer) -> Tuple[Dict[str, List[Union[str, float]]], Pipeline, Dict[str, Callable[..., Any]]]:
+    def _get_pipeline_grid_scorer_tuple(
+        self,
+        feature_transformation: ColumnTransformer
+    ) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
 
         param_grid = {
             'learner__loss': ['squared_loss', 'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive'],
@@ -34,12 +78,15 @@ class OpenMLRegressionTask(RegressionTask):
         return param_grid, pipeline, scorer
 
 
-class OpenMLMultiLabelClassificationTask(MultiLabelClassificationTask):
+class OpenMLMultiClassClassificationTask(OpenMLTask, MultiClassClassificationTask):
 
-    def _get_pipeline_grid_scorer(self, feature_transformation: ColumnTransformer) -> Tuple[Dict[str, List[Union[str, float]]], Pipeline, Dict[str, Callable[..., Any]]]:
+    def _get_pipeline_grid_scorer_tuple(
+        self,
+        feature_transformation: ColumnTransformer
+    ) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
 
         param_grid = {
-            'learner__loss': ['hinge', 'log', 'modified_huber', 'squared_hinge'],
+            'learner__loss': ['log', 'modified_huber'],
             'learner__penalty': ['l2', 'l1', 'elasticnet'],
             'learner__alpha': [0.0001, 0.001, 0.01]
         }
@@ -58,12 +105,15 @@ class OpenMLMultiLabelClassificationTask(MultiLabelClassificationTask):
         return param_grid, pipeline, scorer
 
 
-class OpenMLBinaryClassificationTask(BinaryClassificationTask):
+class OpenMLBinaryClassificationTask(OpenMLTask, BinaryClassificationTask):
 
-    def _get_pipeline_grid_scorer(self, feature_transformation: ColumnTransformer) -> Tuple[Dict[str, List[Union[str, float]]], Pipeline, Dict[str, Callable[..., Any]]]:
+    def _get_pipeline_grid_scorer_tuple(
+        self,
+        feature_transformation: ColumnTransformer
+    ) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
 
         param_grid = {
-            'learner__loss': ['hinge', 'log', 'modified_huber', 'squared_hinge'],
+            'learner__loss': ['log', 'modified_huber'],
             'learner__penalty': ['l2', 'l1', 'elasticnet'],
             'learner__alpha': [0.0001, 0.001, 0.01]
         }
@@ -76,6 +126,7 @@ class OpenMLBinaryClassificationTask(BinaryClassificationTask):
         )
 
         scorer = {
+            "F1": make_scorer(f1_score, average="macro"),
             "ROC/AUC": make_scorer(roc_auc_score, needs_proba=True)
         }
 
