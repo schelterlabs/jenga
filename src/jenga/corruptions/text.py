@@ -1,6 +1,6 @@
 import random
 
-from jenga.basis import DataCorruption
+from ..basis import DataCorruption
 
 
 # Mimics cases where text is processed with the wrong encoding

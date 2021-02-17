@@ -1,6 +1,6 @@
 import numpy as np
 
-from jenga.basis import DataCorruption, TabularCorruption
+from ..basis import DataCorruption, TabularCorruption
 
 
 # Inject different kinds of missing values

@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 import tensorflow_data_validation as tfdv
 
-from jenga.corruptions.generic import MissingValues, SwappedValues
-from jenga.corruptions.numerical import GaussianNoise, Scaling
-from jenga.corruptions.text import BrokenCharacters
+from ..corruptions.generic import MissingValues, SwappedValues
+from ..corruptions.numerical import GaussianNoise, Scaling
+from ..corruptions.text import BrokenCharacters
 
 
 # Takes a tfdv schema and corruptions to evaluate two things at once:

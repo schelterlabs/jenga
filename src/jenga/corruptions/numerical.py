@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 
-from jenga.basis import TabularCorruption
+from ..basis import TabularCorruption
 
 
 # Add gaussian noise to an attribute, mimics noisy, unreliable measurements

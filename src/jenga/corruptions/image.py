@@ -3,7 +3,7 @@ import random
 import imgaug.augmenters as iaa
 import numpy as np
 
-from jenga.basis import DataCorruption
+from ..basis import DataCorruption
 
 
 # Base class for image corruptions, for which we rely on the augmentor library
