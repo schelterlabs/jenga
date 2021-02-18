@@ -19,6 +19,7 @@ dependencies:
       - imagecorruptions
       - flake8
       - flake8-mypy
+      - jsonpickle
   # for development only (could also be kept in a separate environment file)
   - jupyterlab
   - pytest
