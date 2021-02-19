@@ -259,7 +259,7 @@ class BinaryClassificationTask(Task):
 
     def _check_data(self):
         """
-        Checks whether or not the given data/labels are oft `categorical_dtype`.
+        Checks whether or not the given data/labels are of `categorical_dtype`.
 
         Raises:
             ValueError: If labels does not fit the constrains for a binary classification task.
