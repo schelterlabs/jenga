@@ -1,11 +1,5 @@
-from typing import Any, Dict, Tuple
-
 import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import make_scorer, roc_auc_score
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
 
 from ..basis import BinaryClassificationTask
 
@@ -55,27 +49,3 @@ class IncomeEstimationTask(BinaryClassificationTask):
             is_image_data=False,
             seed=seed
         )
-
-    def _get_pipeline_grid_scorer_tuple(
-        self,
-        feature_transformation: ColumnTransformer
-    ) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
-
-        param_grid = {
-            'learner__loss': ['log'],
-            'learner__penalty': ['l2', 'l1', 'elasticnet'],
-            'learner__alpha': [0.0001, 0.001, 0.01, 0.1]
-        }
-
-        pipeline = Pipeline(
-            [
-                ('features', feature_transformation),
-                ('learner', SGDClassifier(max_iter=1000))
-            ]
-        )
-
-        scorer = {
-            "ROC/AUC": make_scorer(roc_auc_score, needs_proba=True)
-        }
-
-        return param_grid, pipeline, scorer

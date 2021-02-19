@@ -1,9 +1,8 @@
-from typing import Any, Dict, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 import tensorflow as tf
 from keras.utils import to_categorical
-from sklearn.compose import ColumnTransformer
 from tensorflow import keras
 
 from ..basis import BinaryClassificationTask
@@ -60,8 +59,6 @@ class ShoeCategorizationTask(BinaryClassificationTask):
             seed=seed
         )
 
-    def _get_pipeline_grid_scorer_tuple(self, feature_transformation: ColumnTransformer) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
-        pass
     def fit_baseline_model(self, images: Optional[np.array] = None, labels: Optional[np.array] = None) -> PreprocessingDecorator:
         """
         Because data are images, this overrides the default behavior.
@@ -82,6 +79,8 @@ class ShoeCategorizationTask(BinaryClassificationTask):
 
         if (images is None and labels is not None) or (images is not None and labels is None):
             raise ValueError("either set both parameters (images, labels) or non")
+
+        use_original_data = images is None
 
         if images is None:
             images = self.train_data
@@ -105,5 +104,10 @@ class ShoeCategorizationTask(BinaryClassificationTask):
         reshaped_images = normalized_images.reshape(images.shape[0], 28, 28, 1)
 
         model.fit(reshaped_images, to_categorical(labels))
+        model = PreprocessingDecorator(model)
 
-        return PreprocessingDecorator(model)
+        # only set baseline model attribute if it is trained on the original task data
+        if use_original_data:
+            self._baseline_model = model
+
+        return model
