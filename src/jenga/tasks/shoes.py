@@ -80,6 +80,8 @@ class ShoeCategorizationTask(BinaryClassificationTask):
         if (images is None and labels is not None) or (images is not None and labels is None):
             raise ValueError("either set both parameters (images, labels) or non")
 
+        use_original_data = images is None
+
         if images is None:
             images = self.train_data
             labels = self.train_labels
@@ -102,5 +104,10 @@ class ShoeCategorizationTask(BinaryClassificationTask):
         reshaped_images = normalized_images.reshape(images.shape[0], 28, 28, 1)
 
         model.fit(reshaped_images, to_categorical(labels))
+        model = PreprocessingDecorator(model)
 
-        return PreprocessingDecorator(model)
+        # only set baseline model attribute if it is trained on the original task data
+        if use_original_data:
+            self._baseline_model = model
+
+        return model

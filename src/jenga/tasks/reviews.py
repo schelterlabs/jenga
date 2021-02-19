@@ -128,8 +128,8 @@ class VideogameReviewsTask(BinaryClassificationTask):
         )
 
         param_grid = {
-            'learner__loss': ['log'],
-            'learner__penalty': ['l2', 'l1'],
+            'learner__loss': ['log', 'modified_huber'],
+            'learner__penalty': ['l2', 'l1', 'elasticnet'],
             'learner__alpha': [0.0001, 0.001, 0.01, 0.1]
         }
 
