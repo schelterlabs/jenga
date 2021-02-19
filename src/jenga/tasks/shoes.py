@@ -24,6 +24,13 @@ class PreprocessingDecorator:
 class ShoeCategorizationTask(BinaryClassificationTask):
 
     def __init__(self, seed):
+        """
+        Class that represents a binary classification task based on a subset of [Fashion-MNIST](https://github.com/zalandoresearch/fashion-mnist).
+        Predict whether an image is a sneaker (`0`) or an ankle boot (`1`).
+
+        Args:
+            seed (Optional[int], optional): Seed for determinism. Defaults to None.
+        """
 
         sneaker_id = 7
         ankle_boot_id = 9
@@ -55,8 +62,23 @@ class ShoeCategorizationTask(BinaryClassificationTask):
 
     def _get_pipeline_grid_scorer_tuple(self, feature_transformation: ColumnTransformer) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
         pass
+    def fit_baseline_model(self, images: Optional[np.array] = None, labels: Optional[np.array] = None) -> PreprocessingDecorator:
+        """
+        Because data are images, this overrides the default behavior.
 
-    def fit_baseline_model(self, images: Optional[np.array] = None, labels: Optional[np.array] = None):
+        Fit a baseline model. If no data is given (default), it uses the task's train data and creates the attribute `_baseline_model`. \
+            If data is given, it trains this data.
+
+        Args:
+            images (Optional[np.array], optional): Data to train. Defaults to None.
+            labels (Optional[np.array], optional): Labels to train. Defaults to None.
+
+        Raises:
+            ValueError: If `images` is given but `labels` not or vice versa
+
+        Returns:
+            PreprocessingDecorator: Trained model
+        """
 
         if (images is None and labels is not None) or (images is not None and labels is None):
             raise ValueError("either set both parameters (images, labels) or non")

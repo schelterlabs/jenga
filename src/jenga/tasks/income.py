@@ -14,6 +14,17 @@ from ..basis import BinaryClassificationTask
 class IncomeEstimationTask(BinaryClassificationTask):
 
     def __init__(self, seed, ignore_incomplete_records_for_training=False):
+        """
+        Class that represents a binary classification task based on the [Adult Data Set](https://archive.ics.uci.edu/ml/datasets/adult).
+
+        Adult Data Set Abstract:
+            Predict whether income exceeds $50K/yr based on census data. Also known as "Census Income" dataset.
+
+        Args:
+            seed (Optional[int], optional): Seed for determinism. Defaults to None.
+            ignore_incomplete_records_for_training (bool, optional): Indicates whether or not to drop rows with missing values for training. \
+                Defaults to False.
+        """
 
         columns = ['workclass', 'occupation', 'marital_status', 'education', 'hours_per_week', 'age']
         categorical_columns = ['workclass', 'occupation', 'marital_status', 'education']
