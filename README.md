@@ -49,6 +49,20 @@ Optional and needed only once after `git clone`:
 Then take a look into the `scripts` and `notebooks` folders.
 
 
+## PyPI
+
+(TODO: Not yet published)
+
+The following options are possible:
+
+```bash
+pip install jenga             # jenga is ready for all types of corruptions
+pip install jenga[all]        # install all dependencies, optimal for development
+pip install jenga[image]      # also installs tensorflow necessary for ShoeCategorizationTask
+pip install jenga[validation] # also install tensorflow-data-validation necessary for SchemaStresstest
+```
+
+
 ## Dependency Management & Reproducibility
 
 1. Always keep your abstract (unpinned) dependencies updated in `environment.yaml` and eventually

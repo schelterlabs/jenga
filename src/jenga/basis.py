@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-import tensorflow as tf
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -69,7 +68,12 @@ class Task(ABC):
         if self._seed:
             random.seed(self._seed)
             np.random.seed(self._seed)
-            tf.random.set_seed(self._seed)
+
+            try:
+                import tensorflow as tf
+                tf.random.set_seed(self._seed)
+            except ImportError:
+                pass
 
     def _get_task_type_of_data(self) -> Optional[int]:
         """
