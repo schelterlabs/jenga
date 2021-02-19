@@ -311,6 +311,23 @@ class MultiClassClassificationTask(Task):
         is_image_data: bool = False,
         seed: Optional[int] = None
     ):
+        """
+        Class that represents a multi-class classification task. \
+            If `is_image_data = False` it forces the `train_labels` and `test_labels` to be of a `categorical_dtype`.
+        It implements abstract methods defined by parent class `Task`.
+
+        Args:
+            train_data (pd.DataFrame): Training data
+            train_labels (pd.Series): Training labels
+            test_data (pd.DataFrame): Test data
+            test_labels (pd.Series): Test labels
+            categorical_columns (List[str], optional): List of categorical column names. Defaults to [].
+            numerical_columns (List[str], optional): List of numerical column names. Defaults to [].
+            text_columns (List[str], optional): List of text column names. Defaults to [].
+            is_image_data (bool, optional): Indicates whether data are images. Defaults to False.
+            seed (Optional[int], optional): Seed for determinism. Defaults to None.
+        """
+
         super().__init__(
             train_data=train_data,
             train_labels=train_labels,
@@ -327,12 +344,28 @@ class MultiClassClassificationTask(Task):
         self._check_data()
 
     def _check_data(self):
+        """
+        Checks whether or not the given data/labels are of `categorical_dtype`.
+
+        Raises:
+            ValueError: If labels does not fit the constrains for a multi-class classification task.
+        """
+
         super()._check_data()
 
         if self._get_task_type_of_data() != MULTI_CLASS_CLASSIFICATION and not self.is_image_data:
             raise ValueError("Downloaded data is not a multi-class classification task.")
 
     def get_baseline_performance(self) -> float:
+        """
+        By default calculate the F1 score of the baseline model based on test data.
+
+        Calculate the ROC/AUC value for a test set that does not contains samples from all possible classes is not supported by `roc_auc_score`. \
+            This is why default score differs from the binary-classification score.
+
+        Returns:
+            float: Baseline performance on test data
+        """
 
         super().get_baseline_performance()
 
@@ -340,6 +373,19 @@ class MultiClassClassificationTask(Task):
         return self.score_on_test_data(predictions)
 
     def score_on_test_data(self, predictions: pd.array) -> float:
+        """
+        By default calculate the F1 score of the given `predictions` against test data.
+
+        Calculate the ROC/AUC value for a test set that does not contains samples from all possible classes is not supported by `roc_auc_score`. \
+            This is why the default score differs from the binary-classification score.
+
+        Args:
+            predictions (pd.array): 1-D array given by a model's `predict` method
+
+        Returns:
+            float: F1 score of given `predictions`
+        """
+
         return f1_score(self.test_labels, predictions, average="macro")
 
 
