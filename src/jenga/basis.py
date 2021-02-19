@@ -291,7 +291,7 @@ class BinaryClassificationTask(Task):
             predictions (pd.array): n-D array given by a model's `predict_proba` method, where n is the number of classes
 
         Returns:
-            float: Score of given `predictions`
+            float: ROC/AUC score of given `predictions`
         """
 
         return roc_auc_score(self.test_labels, predictions[:, 1])
