@@ -16,6 +16,14 @@ from ..basis import BinaryClassificationTask
 class VideogameReviewsTask(BinaryClassificationTask):
 
     def __init__(self, seed):
+        """
+        Class that represents a binary classification task based on video game reviews.
+        Predict whether a video game review is considered helpful or not.
+
+        Args:
+            seed (Optional[int], optional): Seed for determinism. Defaults to None.
+        """
+
         columns = ['marketplace', 'customer_id', 'review_id', 'product_id', 'product_parent',
                    'product_title', 'product_category', 'star_rating', 'helpful_votes',
                    'total_votes', 'vine', 'verified_purchase', 'review_headline', 'review_body',
@@ -81,8 +89,23 @@ class VideogameReviewsTask(BinaryClassificationTask):
 
     def _get_pipeline_grid_scorer_tuple(self, feature_transformation: ColumnTransformer) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
         pass
+    def fit_baseline_model(self, train_data: Optional[pd.DataFrame] = None, train_labels: Optional[pd.Series] = None) -> BaseEstimator:
+        """
+        Because data contains text columns, this overrides the default behavior.
 
-    def fit_baseline_model(self, train_data: Optional[pd.DataFrame] = None, train_labels: Optional[pd.Series] = None):
+        Fit a baseline model. If no data is given (default), it uses the task's train data and creates the attribute `_baseline_model`. \
+            If data is given, it trains this data.
+
+        Args:
+            train_data (Optional[pd.DataFrame], optional): Data to train. Defaults to None.
+            train_labels (Optional[pd.Series], optional): Labels to train. Defaults to None.
+
+        Raises:
+            ValueError: If `train_data` is given but `train_labels` not or vice versa
+
+        Returns:
+            BaseEstimator: Trained model
+        """
 
         if (train_data is None and train_labels is not None) or (train_data is not None and train_labels is None):
             raise ValueError("either set both parameters (train_data, train_labels) or non")
