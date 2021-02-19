@@ -8,7 +8,14 @@ import tensorflow as tf
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import f1_score, mean_squared_error, roc_auc_score
+from sklearn.linear_model import SGDClassifier, SGDRegressor
+from sklearn.metrics import (
+    f1_score,
+    make_scorer,
+    mean_absolute_error,
+    mean_squared_error,
+    roc_auc_score
+)
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -270,6 +277,39 @@ class BinaryClassificationTask(Task):
         if self._get_task_type_of_data() != BINARY_CLASSIFICATION and not self.is_image_data:
             raise ValueError("Downloaded data is not a binary classification task.")
 
+    def _get_pipeline_grid_scorer_tuple(
+        self,
+        feature_transformation: ColumnTransformer
+    ) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
+        """
+        Binary classification specific default `Pipeline`, hyperparameter grid for HPO, and scorer for baseline model training.
+
+        Args:
+            feature_transformation (ColumnTransformer): Basic preprocessing for columns. Given by `fit_baseline_model` that calls this method
+
+        Returns:
+            Tuple[Dict[str, object], Any, Dict[str, Any]]: Binary classification specific parts to build baseline model
+        """
+
+        param_grid = {
+            'learner__loss': ['log', 'modified_huber'],
+            'learner__penalty': ['l2', 'l1', 'elasticnet'],
+            'learner__alpha': [0.0001, 0.001, 0.01, 0.1]
+        }
+
+        pipeline = Pipeline(
+            [
+                ('features', feature_transformation),
+                ('learner', SGDClassifier(max_iter=1000, n_jobs=-1))
+            ]
+        )
+
+        scorer = {
+            "ROC/AUC": make_scorer(roc_auc_score, needs_proba=True)
+        }
+
+        return param_grid, pipeline, scorer
+
     def get_baseline_performance(self) -> float:
         """
         By default calculate the ROC/AUC score of the baseline model based on test data.
@@ -355,6 +395,39 @@ class MultiClassClassificationTask(Task):
 
         if self._get_task_type_of_data() != MULTI_CLASS_CLASSIFICATION and not self.is_image_data:
             raise ValueError("Downloaded data is not a multi-class classification task.")
+
+    def _get_pipeline_grid_scorer_tuple(
+        self,
+        feature_transformation: ColumnTransformer
+    ) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
+        """
+        Multi-class classification specific default `Pipeline`, hyperparameter grid for HPO, and scorer for baseline model training.
+
+        Args:
+            feature_transformation (ColumnTransformer): Basic preprocessing for columns. Given by `fit_baseline_model` that calls this method
+
+        Returns:
+            Tuple[Dict[str, object], Any, Dict[str, Any]]: Multi-class classification specific parts to build baseline model
+        """
+
+        param_grid = {
+            'learner__loss': ['log', 'modified_huber'],
+            'learner__penalty': ['l2', 'l1', 'elasticnet'],
+            'learner__alpha': [0.0001, 0.001, 0.01, 0.1]
+        }
+
+        pipeline = Pipeline(
+            [
+                ('features', feature_transformation),
+                ('learner', SGDClassifier(max_iter=1000, n_jobs=-1))
+            ]
+        )
+
+        scorer = {
+            "F1": make_scorer(f1_score, average="macro")
+        }
+
+        return param_grid, pipeline, scorer
 
     def get_baseline_performance(self) -> float:
         """
@@ -446,6 +519,40 @@ class RegressionTask(Task):
 
         if self._get_task_type_of_data() != REGRESSION:
             raise ValueError("Downloaded data is not a regression task.")
+
+    def _get_pipeline_grid_scorer_tuple(
+        self,
+        feature_transformation: ColumnTransformer
+    ) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
+        """
+        Regression specific default `Pipeline`, hyperparameter grid for HPO, and scorer for baseline model training.
+
+        Args:
+            feature_transformation (ColumnTransformer): Basic preprocessing for columns. Given by `fit_baseline_model` that calls this method
+
+        Returns:
+            Tuple[Dict[str, object], Any, Dict[str, Any]]: Regression specific parts to build baseline model
+        """
+
+        param_grid = {
+            'learner__loss': ['squared_loss', 'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive'],
+            'learner__penalty': ['l2', 'l1', 'elasticnet'],
+            'learner__alpha': [0.0001, 0.001, 0.01, 0.1]
+        }
+
+        pipeline = Pipeline(
+            [
+                ('features', feature_transformation),
+                ('learner', SGDRegressor(max_iter=1000))
+            ]
+        )
+
+        scorer = {
+            "MSE": make_scorer(mean_squared_error, greater_is_better=False),
+            "MAE": make_scorer(mean_absolute_error, greater_is_better=False)
+        }
+
+        return param_grid, pipeline, scorer
 
     def get_baseline_performance(self) -> float:
         """

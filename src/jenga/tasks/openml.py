@@ -1,18 +1,8 @@
-from typing import Any, Dict, Optional, Tuple
+from typing import Optional
 
 import pandas as pd
-from sklearn.compose import ColumnTransformer
 from sklearn.datasets import fetch_openml
-from sklearn.linear_model import SGDClassifier, SGDRegressor
-from sklearn.metrics import (
-    f1_score,
-    make_scorer,
-    mean_absolute_error,
-    mean_squared_error,
-    roc_auc_score
-)
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
 
 from ..basis import (
     BinaryClassificationTask,
@@ -63,30 +53,7 @@ class OpenMLRegressionTask(OpenMLTask, RegressionTask):
     Class that represents a regression task and gets data from [OpenML](https://www.openml.org).
     """
 
-    def _get_pipeline_grid_scorer_tuple(
-        self,
-        feature_transformation: ColumnTransformer
-    ) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
-
-        param_grid = {
-            'learner__loss': ['squared_loss', 'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive'],
-            'learner__penalty': ['l2', 'l1', 'elasticnet'],
-            'learner__alpha': [0.0001, 0.001, 0.01]
-        }
-
-        pipeline = Pipeline(
-            [
-                ('features', feature_transformation),
-                ('learner', SGDRegressor(max_iter=1000))
-            ]
-        )
-
-        scorer = {
-            "MSE": make_scorer(mean_squared_error, greater_is_better=False),
-            "MAE": make_scorer(mean_absolute_error, greater_is_better=False)
-        }
-
-        return param_grid, pipeline, scorer
+    pass
 
 
 class OpenMLMultiClassClassificationTask(OpenMLTask, MultiClassClassificationTask):
@@ -94,29 +61,7 @@ class OpenMLMultiClassClassificationTask(OpenMLTask, MultiClassClassificationTas
     Class that represents a multi-class classification task and gets data from [OpenML](https://www.openml.org).
     """
 
-    def _get_pipeline_grid_scorer_tuple(
-        self,
-        feature_transformation: ColumnTransformer
-    ) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
-
-        param_grid = {
-            'learner__loss': ['log', 'modified_huber'],
-            'learner__penalty': ['l2', 'l1', 'elasticnet'],
-            'learner__alpha': [0.0001, 0.001, 0.01]
-        }
-
-        pipeline = Pipeline(
-            [
-                ('features', feature_transformation),
-                ('learner', SGDClassifier(max_iter=1000, n_jobs=-1))
-            ]
-        )
-
-        scorer = {
-            "F1": make_scorer(f1_score, average="macro")
-        }
-
-        return param_grid, pipeline, scorer
+    pass
 
 
 class OpenMLBinaryClassificationTask(OpenMLTask, BinaryClassificationTask):
@@ -124,27 +69,4 @@ class OpenMLBinaryClassificationTask(OpenMLTask, BinaryClassificationTask):
     Class that represents a binary classification task and gets data from [OpenML](https://www.openml.org).
     """
 
-    def _get_pipeline_grid_scorer_tuple(
-        self,
-        feature_transformation: ColumnTransformer
-    ) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
-
-        param_grid = {
-            'learner__loss': ['log', 'modified_huber'],
-            'learner__penalty': ['l2', 'l1', 'elasticnet'],
-            'learner__alpha': [0.0001, 0.001, 0.01]
-        }
-
-        pipeline = Pipeline(
-            [
-                ('features', feature_transformation),
-                ('learner', SGDClassifier(max_iter=1000, n_jobs=-1))
-            ]
-        )
-
-        scorer = {
-            "F1": make_scorer(f1_score, average="macro"),
-            "ROC/AUC": make_scorer(roc_auc_score, needs_proba=True)
-        }
-
-        return param_grid, pipeline, scorer
+    pass

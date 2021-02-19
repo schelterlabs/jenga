@@ -1,9 +1,8 @@
-from typing import Any, Dict, Optional, Tuple
+from typing import Optional
 
 import numpy as np
 import tensorflow as tf
 from keras.utils import to_categorical
-from sklearn.compose import ColumnTransformer
 from tensorflow import keras
 
 from ..basis import BinaryClassificationTask
@@ -60,8 +59,6 @@ class ShoeCategorizationTask(BinaryClassificationTask):
             seed=seed
         )
 
-    def _get_pipeline_grid_scorer_tuple(self, feature_transformation: ColumnTransformer) -> Tuple[Dict[str, object], Any, Dict[str, Any]]:
-        pass
     def fit_baseline_model(self, images: Optional[np.array] = None, labels: Optional[np.array] = None) -> PreprocessingDecorator:
         """
         Because data are images, this overrides the default behavior.
