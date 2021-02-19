@@ -32,9 +32,6 @@ class Task(ABC):
         """
         Abstract base class for all Tasks. It defines the interface and a fair amount of functionality, \
             such as fitting a baseline model, inherited to child classes.
-        If `is_image_data = False` it forces the `train_labels` and `test_labels` to be of a proper type:
-            - `categorical_dtype` for classification task
-            - `numeric_dtype` for regression task
 
         Args:
             train_data (pd.DataFrame): Training data
@@ -228,6 +225,23 @@ class BinaryClassificationTask(Task):
         is_image_data: bool = False,
         seed: Optional[int] = None
     ):
+        """
+        Class that represents a binary classification task. \
+            If `is_image_data = False` it forces the `train_labels` and `test_labels` to be of a `categorical_dtype`.
+        It implements abstract methods defined by parent class `Task`.
+
+        Args:
+            train_data (pd.DataFrame): Training data
+            train_labels (pd.Series): Training labels
+            test_data (pd.DataFrame): Test data
+            test_labels (pd.Series): Test labels
+            categorical_columns (List[str], optional): List of categorical column names. Defaults to [].
+            numerical_columns (List[str], optional): List of numerical column names. Defaults to [].
+            text_columns (List[str], optional): List of text column names. Defaults to [].
+            is_image_data (bool, optional): Indicates whether data are images. Defaults to False.
+            seed (Optional[int], optional): Seed for determinism. Defaults to None.
+        """
+
         super().__init__(
             train_data=train_data,
             train_labels=train_labels,
@@ -244,12 +258,25 @@ class BinaryClassificationTask(Task):
         self._check_data()
 
     def _check_data(self):
+        """
+        Checks whether or not the given data/labels are oft `categorical_dtype`.
+
+        Raises:
+            ValueError: If labels does not fit the constrains for a binary classification task.
+        """
+
         super()._check_data()
 
         if self._get_task_type_of_data() != BINARY_CLASSIFICATION and not self.is_image_data:
             raise ValueError("Downloaded data is not a binary classification task.")
 
     def get_baseline_performance(self) -> float:
+        """
+        By default calculate the ROC/AUC score of the baseline model based on test data.
+
+        Returns:
+            float: Baseline performance on test data
+        """
 
         super().get_baseline_performance()
 
@@ -257,6 +284,16 @@ class BinaryClassificationTask(Task):
         return self.score_on_test_data(predicted_label_probabilities)
 
     def score_on_test_data(self, predictions: pd.array) -> float:
+        """
+        By default calculate the ROC/AUC score of the given `predictions` against test data.
+
+        Args:
+            predictions (pd.array): n-D array given by a model's `predict_proba` method, where n is the number of classes
+
+        Returns:
+            float: Score of given `predictions`
+        """
+
         return roc_auc_score(self.test_labels, predictions[:, 1])
 
 
