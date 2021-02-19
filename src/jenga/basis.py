@@ -403,6 +403,22 @@ class RegressionTask(Task):
         is_image_data: bool = False,
         seed: Optional[int] = None
     ):
+        """
+        Class that represents a regression task. Forces the `train_labels` and `test_labels` to be of a `numeric_dtype`.
+        It implements abstract methods defined by parent class `Task`.
+
+        Args:
+            train_data (pd.DataFrame): Training data
+            train_labels (pd.Series): Training labels
+            test_data (pd.DataFrame): Test data
+            test_labels (pd.Series): Test labels
+            categorical_columns (List[str], optional): List of categorical column names. Defaults to [].
+            numerical_columns (List[str], optional): List of numerical column names. Defaults to [].
+            text_columns (List[str], optional): List of text column names. Defaults to [].
+            is_image_data (bool, optional): Indicates whether data are images. Defaults to False.
+            seed (Optional[int], optional): Seed for determinism. Defaults to None.
+        """
+
         super().__init__(
             train_data=train_data,
             train_labels=train_labels,
@@ -419,12 +435,25 @@ class RegressionTask(Task):
         self._check_data()
 
     def _check_data(self):
+        """
+        Checks whether or not the given data/labels are of `numeric_dtype`.
+
+        Raises:
+            ValueError: If labels does not fit the constrains for a regression task.
+        """
+
         super()._check_data()
 
         if self._get_task_type_of_data() != REGRESSION:
             raise ValueError("Downloaded data is not a regression task.")
 
     def get_baseline_performance(self) -> float:
+        """
+        By default calculate the MSE of the baseline model based on test data.
+
+        Returns:
+            float: Baseline performance on test data
+        """
 
         super().get_baseline_performance()
 
@@ -432,6 +461,16 @@ class RegressionTask(Task):
         return self.score_on_test_data(predictions)
 
     def score_on_test_data(self, predictions: pd.array) -> float:
+        """
+        By default calculate the MSE of the given `predictions` against test data.
+
+        Args:
+            predictions (pd.array): 1-D array given by a model's `predict` method
+
+        Returns:
+            float: MSE of given `predictions`
+        """
+
         return mean_squared_error(self.test_labels, predictions)
 
 
