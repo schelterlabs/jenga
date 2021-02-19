@@ -25,6 +25,14 @@ from ..basis import (
 class OpenMLTask(Task):
 
     def __init__(self, openml_id: int, train_size: float = 0.8, seed: Optional[int] = None):
+        """
+        Base class for task that get data from [OpenML](https://www.openml.org).
+
+        Args:
+            openml_id (int): ID of the to-be-fetched data from [OpenML](https://www.openml.org)
+            train_size (float, optional): Defines the data split. Defaults to 0.8.
+            seed (Optional[int], optional): Seed for determinism. Defaults to None.
+        """
 
         X, y = fetch_openml(data_id=openml_id, as_frame=True, return_X_y=True)
         train_data, test_data, train_labels, test_labels = train_test_split(X, y, train_size=train_size)
@@ -51,6 +59,9 @@ class OpenMLTask(Task):
 
 
 class OpenMLRegressionTask(OpenMLTask, RegressionTask):
+    """
+    Class that represents a regression task and gets data from [OpenML](https://www.openml.org).
+    """
 
     def _get_pipeline_grid_scorer_tuple(
         self,
@@ -79,6 +90,9 @@ class OpenMLRegressionTask(OpenMLTask, RegressionTask):
 
 
 class OpenMLMultiClassClassificationTask(OpenMLTask, MultiClassClassificationTask):
+    """
+    Class that represents a multi-class classification task and gets data from [OpenML](https://www.openml.org).
+    """
 
     def _get_pipeline_grid_scorer_tuple(
         self,
@@ -106,6 +120,9 @@ class OpenMLMultiClassClassificationTask(OpenMLTask, MultiClassClassificationTas
 
 
 class OpenMLBinaryClassificationTask(OpenMLTask, BinaryClassificationTask):
+    """
+    Class that represents a binary classification task and gets data from [OpenML](https://www.openml.org).
+    """
 
     def _get_pipeline_grid_scorer_tuple(
         self,
