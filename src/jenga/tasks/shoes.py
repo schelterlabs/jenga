@@ -2,7 +2,6 @@ from typing import Optional
 
 import numpy as np
 import tensorflow as tf
-from keras.utils import to_categorical
 from tensorflow import keras
 
 from ..basis import BinaryClassificationTask
@@ -103,7 +102,7 @@ class ShoeCategorizationTask(BinaryClassificationTask):
         normalized_images = images.astype('float32') / 255
         reshaped_images = normalized_images.reshape(images.shape[0], 28, 28, 1)
 
-        model.fit(reshaped_images, to_categorical(labels))
+        model.fit(reshaped_images, keras.utils.to_categorical(labels))
         model = PreprocessingDecorator(model)
 
         # only set baseline model attribute if it is trained on the original task data
