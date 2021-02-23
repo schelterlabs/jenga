@@ -14399,7 +14399,7 @@ div.jp-OutputPrompt {
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h1 id="Why?">Why?<a class="anchor-link" href="#Why?">&#182;</a></h1><ul>
 <li>Software systems are tested (Unit tests, integration tests, user tests, ...)</li>
-<li><strong>ML Systems are difficult to test</strong><ul>
+<li><strong>ML applications are difficult to test</strong><ul>
 <li>ML models depend on data </li>
 <li>Real test data is limited, models overparametrized <ul>
 <li>Google's underspecifiation paper (<a href="https://arxiv.org/abs/2011.03395">D'Amour et al., 2020</a>)</li>
@@ -14428,9 +14428,14 @@ div.jp-OutputPrompt {
 <p>Jenga leverages both to ensure:</p>
 <ul>
 <li>automation</li>
-<li>scalability</li>
 <li>reproducibility</li>
 </ul>
+
+</div>
+</div></section></section><section><section>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h1 id="Jenga---Testing-with-data-corruptions">Jenga - Testing with data corruptions<a class="anchor-link" href="#Jenga---Testing-with-data-corruptions">&#182;</a></h1><p><img src="figs/workflow.png" alt="Jenga flowchart"></p>
 
 </div>
 </div></section></section><section><section>
@@ -14467,39 +14472,18 @@ div.jp-OutputPrompt {
 <p>First, let's instantiate a binary OpenML task (id 1471)</p>
 
 </div>
-</div><div class="fragment"><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+</div><div class="fragment"><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">binary_task</span> <span class="o">=</span> <span class="n">OpenMLBinaryClassificationTask</span><span class="p">(</span><span class="mi">1471</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">task</span> <span class="o">=</span> <span class="n">OpenMLBinaryClassificationTask</span><span class="p">(</span><span class="mi">1471</span><span class="p">)</span>
 </pre></div>
 
      </div>
 </div>
 </div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Baseline ROC/AUC score: 0.66617072988402
-</pre>
-</div>
-</div>
-
-</div>
-
 </div>
 
 </div></div><div class="fragment">
@@ -14511,12 +14495,12 @@ div.jp-OutputPrompt {
 </div></div><div class="fragment"><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">binary_task_model</span> <span class="o">=</span> <span class="n">binary_task</span><span class="o">.</span><span class="n">fit_baseline_model</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">task_model</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">fit_baseline_model</span><span class="p">()</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Baseline ROC/AUC score: </span><span class="si">{</span><span class="n">binary_task</span><span class="o">.</span><span class="n">get_baseline_performance</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Baseline ROC/AUC score: </span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">get_baseline_performance</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 
      </div>
@@ -14536,7 +14520,7 @@ div.jp-OutputPrompt {
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Baseline ROC/AUC score: 0.66617072988402
+<pre>Baseline ROC/AUC score: 0.609494255820072
 </pre>
 </div>
 </div>
@@ -14574,18 +14558,65 @@ div.jp-OutputPrompt {
 </div></section></section><section><section>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="Example:-Missing-values">Example: Missing values<a class="anchor-link" href="#Example:-Missing-values">&#182;</a></h2><p>Let's replace 50% of all values in column V3 with NaNs</p>
+<h2 id="Defining-Custom-Jenga-Corruptions:-Missing-values">Defining Custom Jenga Corruptions: Missing values<a class="anchor-link" href="#Defining-Custom-Jenga-Corruptions:-Missing-values">&#182;</a></h2><p>It's easy to build your own corruptions</p>
 
 </div>
-</div><div class="fragment"><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+</div></section></section><section><section>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MissingValues</span><span class="p">(</span><span class="n">TabularCorruption</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                 <span class="n">column</span><span class="p">,</span> 
+                 <span class="n">fraction</span><span class="p">,</span> 
+                 <span class="n">na_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> 
+                 <span class="n">missingness</span><span class="o">=</span><span class="s1">&#39;MCAR&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Corruptions for structured data</span>
+<span class="sd">        Input:</span>
+<span class="sd">        column:      column to perturb, string</span>
+<span class="sd">        fraction:    fraction of rows to corrupt, float in (0,1)</span>
+<span class="sd">        na_value:    value</span>
+<span class="sd">        missingness: string in [&#39;MCAR&#39;, &#39;MAR&#39;, &#39;MNAR&#39;]</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column</span> <span class="o">=</span> <span class="n">column</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fraction</span> <span class="o">=</span> <span class="n">fraction</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sampling</span> <span class="o">=</span> <span class="n">missingness</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">na_value</span> <span class="o">=</span> <span class="n">na_value</span>
+
+    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">corrupted_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_rows</span><span class="p">(</span><span class="n">corrupted_data</span><span class="p">)</span>
+        <span class="n">corrupted_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">rows</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">column</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">na_value</span>
+        <span class="k">return</span> <span class="n">corrupted_data</span>
+</pre></div>
+
+</div>
+</div></section></section><section><section>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="Example:-Missing-values-and-Scaling">Example: Missing values and Scaling<a class="anchor-link" href="#Example:-Missing-values-and-Scaling">&#182;</a></h2><p>Let's define some corruptions:</p>
+<ul>
+<li>Replace 50% of all values in column <code>V3</code> with NaNs</li>
+<li>Scale values in column <code>V4</code> </li>
+</ul>
+
+</div>
+</div><div class="fragment"><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[11]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">binary_task_corruption</span> <span class="o">=</span> <span class="n">MissingValues</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="s1">&#39;V3&#39;</span><span class="p">,</span> 
-                                       <span class="n">fraction</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> 
-                                       <span class="n">na_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">jenga.corruptions.generic</span> <span class="kn">import</span> <span class="n">MissingValues</span>
+
+<span class="n">missingness</span> <span class="o">=</span> <span class="n">MissingValues</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="s1">&#39;V3&#39;</span><span class="p">,</span> 
+                            <span class="n">fraction</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> 
+                            <span class="n">missingness</span><span class="o">=</span><span class="s1">&#39;MNAR&#39;</span><span class="p">,</span>
+                            <span class="n">na_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+<span class="n">corrupted_df</span> <span class="o">=</span> <span class="n">missingness</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">test_data</span><span class="p">)</span>
+<span class="n">corrupted_df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 </pre></div>
 
      </div>
@@ -14593,26 +14624,338 @@ div.jp-OutputPrompt {
 </div>
 </div>
 
-</div></div><div class="fragment">
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[4]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>V1</th>
+      <th>V2</th>
+      <th>V3</th>
+      <th>V4</th>
+      <th>V5</th>
+      <th>V6</th>
+      <th>V7</th>
+      <th>V8</th>
+      <th>V9</th>
+      <th>V10</th>
+      <th>V11</th>
+      <th>V12</th>
+      <th>V13</th>
+      <th>V14</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>5376</th>
+      <td>4346.67</td>
+      <td>3998.97</td>
+      <td>4284.10</td>
+      <td>4123.08</td>
+      <td>4355.38</td>
+      <td>4628.72</td>
+      <td>4087.18</td>
+      <td>4614.36</td>
+      <td>4204.62</td>
+      <td>4255.90</td>
+      <td>4228.72</td>
+      <td>4293.33</td>
+      <td>4641.54</td>
+      <td>4402.05</td>
+    </tr>
+    <tr>
+      <th>6658</th>
+      <td>4415.90</td>
+      <td>4058.46</td>
+      <td>4292.82</td>
+      <td>4135.90</td>
+      <td>4330.77</td>
+      <td>4609.23</td>
+      <td>4059.49</td>
+      <td>4623.08</td>
+      <td>4201.54</td>
+      <td>4249.23</td>
+      <td>4249.74</td>
+      <td>4315.90</td>
+      <td>4687.18</td>
+      <td>4483.08</td>
+    </tr>
+    <tr>
+      <th>7906</th>
+      <td>4298.97</td>
+      <td>4020.51</td>
+      <td>NaN</td>
+      <td>4120.00</td>
+      <td>4333.85</td>
+      <td>4611.28</td>
+      <td>4044.62</td>
+      <td>4616.92</td>
+      <td>4196.41</td>
+      <td>4235.38</td>
+      <td>4204.10</td>
+      <td>4270.77</td>
+      <td>4599.49</td>
+      <td>4350.26</td>
+    </tr>
+    <tr>
+      <th>6774</th>
+      <td>4314.36</td>
+      <td>3978.97</td>
+      <td>4276.41</td>
+      <td>4107.18</td>
+      <td>4329.23</td>
+      <td>4617.44</td>
+      <td>4083.08</td>
+      <td>4633.33</td>
+      <td>4210.77</td>
+      <td>4238.97</td>
+      <td>4207.69</td>
+      <td>4291.28</td>
+      <td>4592.82</td>
+      <td>4380.00</td>
+    </tr>
+    <tr>
+      <th>4663</th>
+      <td>4290.77</td>
+      <td>3990.77</td>
+      <td>NaN</td>
+      <td>4122.56</td>
+      <td>4332.31</td>
+      <td>4616.41</td>
+      <td>4065.13</td>
+      <td>4618.97</td>
+      <td>4200.51</td>
+      <td>4227.69</td>
+      <td>4198.97</td>
+      <td>4281.54</td>
+      <td>4584.10</td>
+      <td>4355.38</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div></div></section></section><section><section><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">jenga.corruptions.numerical</span> <span class="kn">import</span> <span class="n">Scaling</span>
+
+<span class="n">scaling</span> <span class="o">=</span> <span class="n">Scaling</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="s1">&#39;V4&#39;</span><span class="p">,</span>
+                  <span class="n">fraction</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+                  <span class="n">sampling</span><span class="o">=</span><span class="s1">&#39;NAR&#39;</span><span class="p">)</span>
+
+<span class="n">corrupted_df</span> <span class="o">=</span> <span class="n">scaling</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">corrupted_df</span><span class="p">)</span>
+<span class="n">corrupted_df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>V1</th>
+      <th>V2</th>
+      <th>V3</th>
+      <th>V4</th>
+      <th>V5</th>
+      <th>V6</th>
+      <th>V7</th>
+      <th>V8</th>
+      <th>V9</th>
+      <th>V10</th>
+      <th>V11</th>
+      <th>V12</th>
+      <th>V13</th>
+      <th>V14</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>14814</th>
+      <td>4287.18</td>
+      <td>4024.62</td>
+      <td>4247.69</td>
+      <td>411590.00</td>
+      <td>4334.87</td>
+      <td>4610.77</td>
+      <td>4066.15</td>
+      <td>4618.46</td>
+      <td>4203.08</td>
+      <td>4228.21</td>
+      <td>4212.31</td>
+      <td>4278.46</td>
+      <td>4616.41</td>
+      <td>4352.31</td>
+    </tr>
+    <tr>
+      <th>7987</th>
+      <td>4291.28</td>
+      <td>3992.82</td>
+      <td>4251.79</td>
+      <td>4107.18</td>
+      <td>4336.92</td>
+      <td>4621.03</td>
+      <td>4064.10</td>
+      <td>4627.18</td>
+      <td>4206.15</td>
+      <td>4232.82</td>
+      <td>4175.90</td>
+      <td>4265.64</td>
+      <td>4595.38</td>
+      <td>4351.79</td>
+    </tr>
+    <tr>
+      <th>5241</th>
+      <td>4420.00</td>
+      <td>4055.90</td>
+      <td>4295.38</td>
+      <td>4151.28</td>
+      <td>4359.49</td>
+      <td>4627.69</td>
+      <td>4087.69</td>
+      <td>4614.87</td>
+      <td>4216.92</td>
+      <td>4270.77</td>
+      <td>4243.08</td>
+      <td>4314.87</td>
+      <td>4680.51</td>
+      <td>4470.77</td>
+    </tr>
+    <tr>
+      <th>1382</th>
+      <td>4314.87</td>
+      <td>3971.79</td>
+      <td>NaN</td>
+      <td>4091.28</td>
+      <td>4334.87</td>
+      <td>4603.08</td>
+      <td>4094.36</td>
+      <td>4624.62</td>
+      <td>4215.90</td>
+      <td>4251.79</td>
+      <td>4244.62</td>
+      <td>4294.36</td>
+      <td>4671.28</td>
+      <td>4420.00</td>
+    </tr>
+    <tr>
+      <th>6705</th>
+      <td>4350.26</td>
+      <td>4022.05</td>
+      <td>4276.92</td>
+      <td>4136.92</td>
+      <td>4319.49</td>
+      <td>4600.51</td>
+      <td>4056.92</td>
+      <td>4616.41</td>
+      <td>4196.92</td>
+      <td>4229.74</td>
+      <td>4217.44</td>
+      <td>4284.62</td>
+      <td>4626.67</td>
+      <td>4407.69</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div></section></section><section><section>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p>Now let's evaluate our baseline model in the above task with the specified corruptions.</p>
 <p>We repeat the experiment 5 times to get robust statistics.</p>
 
 </div>
-</div></div><div class="fragment"><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+</div><div class="fragment"><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[12]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">num_repetitions</span> <span class="o">=</span> <span class="mi">5</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">jenga.evaluation.corruption_impact</span> <span class="kn">import</span> <span class="n">CorruptionImpactEvaluator</span>
 
-<span class="n">binary_task_evaluator</span> <span class="o">=</span> <span class="n">CorruptionImpactEvaluator</span><span class="p">(</span><span class="n">binary_task</span><span class="p">)</span>
+<span class="n">num_repetitions</span> <span class="o">=</span> <span class="mi">5</span>
 
-<span class="n">binary_task_results</span> <span class="o">=</span> <span class="n">binary_task_evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">binary_task_model</span><span class="p">,</span> 
-                                                     <span class="n">num_repetitions</span><span class="p">,</span> 
-                                                     <span class="n">binary_task_corruption</span><span class="p">)</span>
+<span class="n">task_evaluator</span> <span class="o">=</span> <span class="n">CorruptionImpactEvaluator</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">task_evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">task_model</span><span class="p">,</span> 
+                                  <span class="n">num_repetitions</span><span class="p">,</span> 
+                                  <span class="n">missingness</span><span class="p">,</span>
+                                  <span class="n">scaling</span><span class="p">)</span>
 </pre></div>
 
      </div>
@@ -14632,7 +14975,44 @@ div.jp-OutputPrompt {
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>0/5 (0.057767000000000124)
+<pre>0/10 (0.0448059999999999)
+</pre>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;ROC on clean data: </span><span class="se">\t</span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">baseline_score</span><span class="si">:</span><span class="s1">0.2</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;ROC on corrupted data: </span><span class="se">\t</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">corrupted_scores</span><span class="p">)</span><span class="si">:</span><span class="s1">0.2</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>ROC on clean data: 	0.61
+ROC on corrupted data: 	0.54
 </pre>
 </div>
 </div>
