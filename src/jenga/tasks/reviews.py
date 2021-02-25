@@ -112,8 +112,8 @@ class VideogameReviewsTask(BinaryClassificationTask):
         use_original_data = train_data is None
 
         if use_original_data:
-            train_data = self.train_data
-            train_labels = self.train_labels
+            train_data = self.train_data.copy()
+            train_labels = self.train_labels.copy()
 
         numerical_attributes = ['star_rating']
         categorical_attributes = ['vine', 'verified_purchase']

@@ -82,8 +82,8 @@ class ShoeCategorizationTask(BinaryClassificationTask):
         use_original_data = images is None
 
         if images is None:
-            images = self.train_data
-            labels = self.train_labels
+            images = self.train_data.copy()
+            labels = self.train_labels.copy()
 
         model = tf.keras.Sequential()
         model.add(tf.keras.layers.Conv2D(filters=64, kernel_size=2, padding='same', activation='relu', input_shape=(28, 28, 1)))
