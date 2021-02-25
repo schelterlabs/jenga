@@ -296,9 +296,9 @@ class BinaryClassificationTask(Task):
         """
 
         param_grid = {
-            'learner__loss': ['log', 'modified_huber'],
-            'learner__penalty': ['l2', 'l1', 'elasticnet'],
-            'learner__alpha': [0.0001, 0.001, 0.01, 0.1]
+            'learner__loss': ['log'],
+            'learner__penalty': ['l2'],
+            'learner__alpha': [0.00001, 0.0001, 0.001, 0.01]
         }
 
         pipeline = Pipeline(
@@ -415,9 +415,9 @@ class MultiClassClassificationTask(Task):
         """
 
         param_grid = {
-            'learner__loss': ['log', 'modified_huber'],
-            'learner__penalty': ['l2', 'l1', 'elasticnet'],
-            'learner__alpha': [0.0001, 0.001, 0.01, 0.1]
+            'learner__loss': ['log'],
+            'learner__penalty': ['l2'],
+            'learner__alpha': [0.00001, 0.0001, 0.001, 0.01]
         }
 
         pipeline = Pipeline(
@@ -539,9 +539,9 @@ class RegressionTask(Task):
         """
 
         param_grid = {
-            'learner__loss': ['squared_loss', 'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive'],
-            'learner__penalty': ['l2', 'l1', 'elasticnet'],
-            'learner__alpha': [0.0001, 0.001, 0.01, 0.1]
+            'learner__loss': ['log', 'modified_huber'],
+            'learner__penalty': ['l2'],
+            'learner__alpha': [0.00001, 0.0001, 0.001, 0.01]
         }
 
         pipeline = Pipeline(
