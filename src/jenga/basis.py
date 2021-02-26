@@ -123,6 +123,10 @@ class Task(ABC):
 
         use_original_data = train_data is None
 
+        # shortcut if model is already trained
+        if use_original_data and self._baseline_model:
+            return self._baseline_model
+
         if use_original_data:
             train_data = self.train_data.copy()
             train_labels = self.train_labels.copy()
