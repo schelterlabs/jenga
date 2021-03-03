@@ -128,15 +128,15 @@ class VideogameReviewsTask(BinaryClassificationTask):
         )
 
         param_grid = {
-            'learner__loss': ['log', 'modified_huber'],
-            'learner__penalty': ['l2', 'l1', 'elasticnet'],
-            'learner__alpha': [0.0001, 0.001, 0.01, 0.1]
+            'learner__loss': ['log'],
+            'learner__penalty': ['l2'],
+            'learner__alpha': [0.00001, 0.0001, 0.001, 0.01]
         }
 
         pipeline = Pipeline(
             [
                 ('features', feature_transformation),
-                ('learner', SGDClassifier(max_iter=1000))
+                ('learner', SGDClassifier(max_iter=1000, n_jobs=-1))
             ]
         )
 
