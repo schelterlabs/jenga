@@ -136,14 +136,14 @@ class Task(ABC):
 
         categorical_preprocessing = Pipeline(
             [
-                ('mark_missing', SimpleImputer(strategy='constant', fill_value='__NA__')),
+                ('mark_missing', SimpleImputer(strategy='most_frequent')),
                 ('one_hot_encode', OneHotEncoder(handle_unknown='ignore'))
             ]
         )
 
         numerical_preprocessing = Pipeline(
             [
-                ('mark_missing', SimpleImputer(strategy='constant', fill_value=0)),
+                ('mark_missing', SimpleImputer(strategy='mean')),
                 ('scaling',  StandardScaler())
             ]
         )
