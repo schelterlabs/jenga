@@ -46,7 +46,7 @@ Optional and needed only once after `git clone`:
    and checkout the configuration under `.pre-commit-config.yaml`.
    The `-n, --no-verify` flag of `git commit` can be used to deactivate pre-commit hooks temporarily.
 
-Then take a look into the `scripts` and `notebooks` folders.
+Then take a look into the `notebooks` folder.
 
 
 ## PyPI
