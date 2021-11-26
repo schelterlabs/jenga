@@ -10,14 +10,14 @@ We design Jenga around three core abstractions:
  * [Data corruptions](https://github.com/schelterlabs/jenga/tree/master/jenga/corruptions) take raw input data and randomly apply certain data errors to them (e.g., missing values)
  * [Evaluators](https://github.com/schelterlabs/jenga/tree/master/jenga/evaluation) take a task and data corruptions, and execute the evaluation by repeatedly corrupting the test data of the task, and recording the predictive performance of the model on the corrupted test data.
 
-Jenga's goal is assist data scientists with detecting such errors early, so that they can protected their models against them. We provide a [jupyter notebook outlining the most basic usage of Jenga](basic-example.ipynb).
+Jenga's goal is assist data scientists with detecting such errors early, so that they can protected their models against them. We provide a [jupyter notebook outlining the most basic usage of Jenga](notebooks/basic-example.ipynb).
 
 Note that you can implement custom tasks and data corruptions by extending the corresponding provided [base classes](https://github.com/schelterlabs/jenga/blob/master/jenga/basis.py).
 
 We additionally provide three advanced usage examples of Jenga:
- * [Studying the impact of missing values](example-missing-value-imputation.ipynb)
- * [Stress testing a feature schema](example-schema-stresstest.ipynb)
- * [Evaluating the helpfulness of data augmentation for an image recognition task](example-image-augmentation.ipynb)
+ * [Studying the impact of missing values](notebooks/example-missing-value-imputation.ipynb)
+ * [Stress testing a feature schema](notebooks/example-schema-stresstest.ipynb)
+ * [Evaluating the helpfulness of data augmentation for an image recognition task](notebooks/example-image-augmentation.ipynb)
 
 
 ## Installation
