@@ -25,10 +25,10 @@ We additionally provide three advanced usage examples of Jenga:
 The following options are possible:
 
 ```bash
-pip install jenga             # jenga is ready for all types of corruptions
+pip install jenga             # jenga is ready for the most corruptions (not images)
 pip install jenga[all]        # install all dependencies, optimal for development
-pip install jenga[image]      # also installs tensorflow necessary for ShoeCategorizationTask
-pip install jenga[validation] # also install tensorflow-data-validation necessary for SchemaStresstest
+pip install jenga[image]      # also installs tensorflow ad image corruption/augmentation libraries
+pip install jenga[validation] # also install tensorflow and tensorflow-data-validation necessary for SchemaStresstest
 ```
 
 
