@@ -22,7 +22,45 @@ We additionally provide three advanced usage examples of Jenga:
 
 ## Installation
 
-In order to set up the necessary environment:
+The following options are possible:
+
+```bash
+pip install jenga             # jenga is ready for all types of corruptions
+pip install jenga[all]        # install all dependencies, optimal for development
+pip install jenga[image]      # also installs tensorflow necessary for ShoeCategorizationTask
+pip install jenga[validation] # also install tensorflow-data-validation necessary for SchemaStresstest
+```
+
+
+## Research
+
+__Jenga__ is based on experiences and code from our ongoing research efforts:
+
+ * Sebastian Schelter, Tammo Rukat, Felix Biessmann (2020). [Learning to Validate the Predictions of Black Box Classifiers on Unseen Data.](https://ssc.io/pdf/mod0077s.pdf) ACM SIGMOD.
+ * Tammo Rukat, Dustin Lange, Sebastian Schelter, Felix Biessmann (2020): [Towards Automated ML Model Monitoring: Measure, Improve and Quantify Data Quality.](https://ssc.io/pdf/autoops.pdf) ML Ops workshop at the Conference on Machine Learning and Systems&nbsp;(MLSys).
+ * Felix Biessmann, Tammo Rukat, Philipp Schmidt, Prathik Naidu, Sebastian Schelter, Andrey Taptunov, Dustin Lange, David Salinas (2019). [DataWig - Missing Value Imputation for Tables.](https://ssc.io/pdf/datawig.pdf) JMLR (open source track)
+
+
+
+## Dependency Management & Reproducibility
+
+1. Always keep your abstract (unpinned) dependencies updated in `environment.yaml` and eventually
+   in `setup.cfg` if you want to ship and install your package via `pip` later on.
+2. Create concrete dependencies as `environment.lock.yaml` for the exact reproduction of your
+   environment with:
+   ```
+   conda env export -n jenga -f environment.lock.yaml
+   ```
+   For multi-OS development, consider using `--no-builds` during the export.
+3. Update your current environment with respect to a new `environment.lock.yaml` using:
+   ```
+   conda env update -f environment.lock.yaml --prune
+   ```
+
+
+ ## Installation for Development
+
+ In order to set up the necessary environment:
 
 1. create an environment `jenga` with the help of [conda],
    ```
@@ -47,45 +85,6 @@ Optional and needed only once after `git clone`:
    The `-n, --no-verify` flag of `git commit` can be used to deactivate pre-commit hooks temporarily.
 
 Then take a look into the `notebooks` folder.
-
-
-## PyPI
-
-(TODO: Not yet published)
-
-The following options are possible:
-
-```bash
-pip install jenga             # jenga is ready for all types of corruptions
-pip install jenga[all]        # install all dependencies, optimal for development
-pip install jenga[image]      # also installs tensorflow necessary for ShoeCategorizationTask
-pip install jenga[validation] # also install tensorflow-data-validation necessary for SchemaStresstest
-```
-
-
-## Dependency Management & Reproducibility
-
-1. Always keep your abstract (unpinned) dependencies updated in `environment.yaml` and eventually
-   in `setup.cfg` if you want to ship and install your package via `pip` later on.
-2. Create concrete dependencies as `environment.lock.yaml` for the exact reproduction of your
-   environment with:
-   ```
-   conda env export -n jenga -f environment.lock.yaml
-   ```
-   For multi-OS development, consider using `--no-builds` during the export.
-3. Update your current environment with respect to a new `environment.lock.yaml` using:
-   ```
-   conda env update -f environment.lock.yaml --prune
-   ```
-
-
-## Research
-
-__Jenga__ is based on experiences and code from our ongoing research efforts:
-
- * Sebastian Schelter, Tammo Rukat, Felix Biessmann (2020). [Learning to Validate the Predictions of Black Box Classifiers on Unseen Data.](https://ssc.io/pdf/mod0077s.pdf) ACM SIGMOD.
- * Tammo Rukat, Dustin Lange, Sebastian Schelter, Felix Biessmann (2020): [Towards Automated ML Model Monitoring: Measure, Improve and Quantify Data Quality.](https://ssc.io/pdf/autoops.pdf) ML Ops workshop at the Conference on Machine Learning and Systems&nbsp;(MLSys).
- * Felix Biessmann, Tammo Rukat, Philipp Schmidt, Prathik Naidu, Sebastian Schelter, Andrey Taptunov, Dustin Lange, David Salinas (2019). [DataWig - Missing Value Imputation for Tables.](https://ssc.io/pdf/datawig.pdf) JMLR (open source track)
 
 
 ## Note
