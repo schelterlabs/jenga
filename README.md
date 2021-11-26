@@ -6,9 +6,9 @@ __Jenga__ is an open source experimentation library that allows data science pra
 
 We design Jenga around three core abstractions:
 
- * [Tasks](https://github.com/schelterlabs/jenga/tree/master/jenga/tasks) contain a raw dataset, an ML model and a prediction task
- * [Data corruptions](https://github.com/schelterlabs/jenga/tree/master/jenga/corruptions) take raw input data and randomly apply certain data errors to them (e.g., missing values)
- * [Evaluators](https://github.com/schelterlabs/jenga/tree/master/jenga/evaluation) take a task and data corruptions, and execute the evaluation by repeatedly corrupting the test data of the task, and recording the predictive performance of the model on the corrupted test data.
+ * [Tasks](tasks) contain a raw dataset, an ML model and a prediction task
+ * [Data corruptions](corruptions) take raw input data and randomly apply certain data errors to them (e.g., missing values)
+ * [Evaluators](evaluation) take a task and data corruptions, and execute the evaluation by repeatedly corrupting the test data of the task, and recording the predictive performance of the model on the corrupted test data.
 
 Jenga's goal is assist data scientists with detecting such errors early, so that they can protected their models against them. We provide a [jupyter notebook outlining the most basic usage of Jenga](notebooks/basic-example.ipynb).
 
