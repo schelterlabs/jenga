@@ -1,0 +1,31 @@
+name: jenga
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python>=3.7.*
+  - pip
+  - numpy
+  - pandas
+  - matplotlib
+  - scikit-learn
+  - tensorflow
+  - pip:
+      # add here only pip-packages that are not available in conda/conda-forge! E.g.:
+      - tensorflow-data-validation
+      - imgaug
+      - imagecorruptions
+      - flake8
+      - flake8-mypy
+      - jsonpickle
+  # for development only (could also be kept in a separate environment file)
+  - jupyterlab
+  - pytest
+  - pytest-cov
+  - tox
+  - pre_commit
+  - nbdime
+  - sphinx
+  - recommonmark
+  - pylint
+  - pydocstyle
