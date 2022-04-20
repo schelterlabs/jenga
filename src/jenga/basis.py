@@ -615,7 +615,7 @@ class TabularCorruption(DataCorruption):
         if fraction <= 0 or fraction >= 1:
             raise ValueError(f"Given value '{fraction}' for fraction not allowed. Must be: 0 < fraction < 1")
 
-        if not sampling.endswith('CAR') or not sampling.endswith('NAR') or not sampling.endswith('AR'):
+        if not sampling.endswith('CAR') and not sampling.endswith('NAR') and not sampling.endswith('AR'):
             raise ValueError(f"Given value '{sampling}' for sampling not allowed. Must end with: 'CAR', 'NAR', or 'AR'")
 
         self.column = column
