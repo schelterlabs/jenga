@@ -78,6 +78,9 @@ class SwappedValues(TabularCorruption):
         if self.swap_with is None:
             columns_to_swap = [c for c in data.columns if c != self.column and data[self.column].dtype == data[c].dtype]
             if len(columns_to_swap) > 0:
+                # since we swap with another random value (if possible), we change two values. This leads to doubling the fraction.
+                # here we fixing this
+                self.fraction = self.fraction / 2 
                 self.swap_with = np.random.choice(columns_to_swap)
             else:
                 self.swap_with = ""
