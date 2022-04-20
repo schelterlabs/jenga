@@ -607,10 +607,17 @@ class TabularCorruption(DataCorruption):
         Corruptions for structured data
         Input:
         column:    column to perturb, string
-        fraction:   fraction of rows to corrupt, float between 0 and 1
+        fraction:   fraction of rows to corrupt, float between 0 and 1 (exclusive)
         sampling:   sampling mechanism for corruptions, options are completely at random ('CAR'),
                      at random ('AR'), not at random ('NAR')
         '''
+
+        if fraction <= 0 or fraction >= 1:
+            raise ValueError(f"Given value '{fraction}' for fraction not allowed. Must be: 0 < fraction < 1")
+
+        if not sampling.endswith('CAR') or not sampling.endswith('NAR') or not sampling.endswith('AR'):
+            raise ValueError(f"Given value '{sampling}' for sampling not allowed. Must end with: 'CAR', 'NAR', or 'AR'")
+
         self.column = column
         self.fraction = fraction
         self.sampling = sampling
@@ -625,6 +632,7 @@ class TabularCorruption(DataCorruption):
         # Completely At Random
         if self.sampling.endswith('CAR'):
             rows = np.random.permutation(data.index)[:int(len(data)*self.fraction)]
+
         elif self.sampling.endswith('NAR') or self.sampling.endswith('AR'):
             n_values_to_discard = int(len(data) * min(self.fraction, 1.0))
             perc_lower_start = np.random.randint(0, len(data) - n_values_to_discard)
