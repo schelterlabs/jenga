@@ -49,9 +49,9 @@ class MissingValuesBasedOnEntropy(DataCorruption):
         super().__init__()
 
     def transform(self, data):
-        df = data.copy(deep=True)
+        data = data.copy(deep=True)
 
-        cutoff = int(len(df) * (1 - self.fraction))
+        cutoff = int(len(data) * (1 - self.fraction))
         probas = self.model.predict_proba(self.data_to_predict_on)
 
         if self.most_confident:
@@ -61,9 +61,9 @@ class MissingValuesBasedOnEntropy(DataCorruption):
             # for samples with the smallest maximum probability the model is most uncertain
             affected = probas.max(axis=1).argsort()[-cutoff:]
 
-        df.loc[df.index[affected], self.column] = self.na_value
+        data.loc[data.index[affected], self.column] = self.na_value
 
-        return df
+        return data
 
 
 # Swapping a fraction of the values between two columns, mimics input errors in forms
@@ -75,31 +75,37 @@ class SwappedValues(TabularCorruption):
         self.swap_with = swap_with
 
     def transform(self, data):
-        df = data.copy(deep=True)
-        if not self.swap_with:
-            self.swap_with = np.random.choice([c for c in data.columns if c != self.column])
+        if self.swap_with is None:
+            columns_to_swap = [c for c in data.columns if c != self.column and data[self.column].dtype == data[c].dtype]
+            if len(columns_to_swap) > 0:
+                self.swap_with = np.random.choice(columns_to_swap)
+            else:
+                self.swap_with = ""
 
-        rows = self.sample_rows(df)
+        if self.swap_with == "":
+            print('SwappedValues only works if at least two columns has same dtype')
+            return data
 
-        tmp_vals = df.loc[rows, self.swap_with].copy(deep=True)
-        df.loc[rows, self.swap_with] = df.loc[rows, self.column]
-        df.loc[rows, self.column] = tmp_vals
+        data = data.copy(deep=True)
+        rows = self.sample_rows(data)
+        tmp_vals = data.loc[rows, self.swap_with].copy(deep=True)
+        data.loc[rows, self.swap_with] = data.loc[rows, self.column]
+        data.loc[rows, self.column] = tmp_vals
 
-        return df
+        return data
 
 
 class CategoricalShift(TabularCorruption):
     def transform(self, data):
-        df = data.copy(deep=True)
-        rows = self.sample_rows(df)
-        numeric_cols, non_numeric_cols = self.get_dtype(df)
+        numeric_cols, _ = self.get_dtype(data)
 
         if self.column in numeric_cols:
             print('CategoricalShift implemented only for categorical variables')
-            return df
+            return data
 
-        else:
-            histogram = df[self.column].value_counts()
-            random_other_val = np.random.permutation(histogram.index)
-            df.loc[rows, self.column] = df.loc[rows, self.column].replace(histogram.index, random_other_val)
-            return df
+        data = data.copy(deep=True)
+        rows = self.sample_rows(data)
+        histogram = data[self.column].value_counts()
+        random_other_val = np.random.permutation(histogram.index)
+        data.loc[rows, self.column] = data.loc[rows, self.column].replace(histogram.index, random_other_val)
+        return data
