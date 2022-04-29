@@ -543,7 +543,7 @@ class RegressionTask(Task):
         """
 
         param_grid = {
-            'learner__loss': ['squared_loss', 'huber'],
+            'learner__loss': ['squared_error', 'huber'],
             'learner__penalty': ['l2'],
             'learner__alpha': [0.00001, 0.0001, 0.001, 0.01]
         }
