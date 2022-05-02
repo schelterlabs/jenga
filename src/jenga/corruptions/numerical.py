@@ -1,5 +1,6 @@
 import random
 
+import pandas as pd
 import numpy as np
 
 from ..basis import TabularCorruption
@@ -13,7 +14,7 @@ class GaussianNoise(TabularCorruption):
     def transform(self, data):
         _, non_numeric_cols = self.get_dtype(data)
 
-        if self.column in non_numeric_cols:
+        if self.column in non_numeric_cols or pd.api.types.is_categorical_dtype(data[self.column]):
             print("GaussianNoise implemented only for numerical variables")
             return data
 
@@ -32,7 +33,7 @@ class Scaling(TabularCorruption):
     def transform(self, data):
         _, non_numeric_cols = self.get_dtype(data)
 
-        if self.column in non_numeric_cols:
+        if self.column in non_numeric_cols or pd.api.types.is_categorical_dtype(data[self.column]):
             print("Scaling implemented only for numerical variables")
             return data
 
