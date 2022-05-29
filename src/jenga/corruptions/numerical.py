@@ -23,7 +23,12 @@ class GaussianNoise(TabularCorruption):
         scale = random.uniform(1, 5)
         rows = self.sample_rows(data)
         noise = np.random.normal(0, scale * stddev, size=len(rows))
+
+        # changing dtype can cause troubles
+        original_dtype = data[self.column].dtype
         data.loc[rows, self.column] += noise
+        data[self.column] = data[self.column].astype(original_dtype)
+
         return data
 
 
