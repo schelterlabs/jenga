@@ -622,8 +622,10 @@ class TabularCorruption(DataCorruption):
 
     def sample_rows(self, data):
 
+        if self.fraction == 1.0:
+            rows = data.index
         # Completely At Random
-        if self.sampling.endswith('CAR'):
+        elif self.sampling.endswith('CAR'):
             rows = np.random.permutation(data.index)[:int(len(data)*self.fraction)]
         elif self.sampling.endswith('NAR') or self.sampling.endswith('AR'):
             n_values_to_discard = int(len(data) * min(self.fraction, 1.0))
