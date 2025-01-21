@@ -300,7 +300,7 @@ class BinaryClassificationTask(Task):
         """
 
         param_grid = {
-            'learner__loss': ['log'],
+            'learner__loss': ['log_loss'],
             'learner__penalty': ['l2'],
             'learner__alpha': [0.00001, 0.0001, 0.001, 0.01]
         }
@@ -419,7 +419,7 @@ class MultiClassClassificationTask(Task):
         """
 
         param_grid = {
-            'learner__loss': ['log'],
+            'learner__loss': ['log_loss'],
             'learner__penalty': ['l2'],
             'learner__alpha': [0.00001, 0.0001, 0.001, 0.01]
         }
